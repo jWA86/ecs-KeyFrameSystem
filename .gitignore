@@ -1,0 +1,6 @@
+.vscode/
+node_modules/
+todo.txt
+.nyc_output/
+coverage
+package-lock.json
