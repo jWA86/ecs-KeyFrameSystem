@@ -22,7 +22,7 @@ describe("KeyFrameController", () => {
     beforeEach(() => {
         system = new KeyFrameSystem();
         factory = new ComponentFactory<KeyFrameControllerComponent>(10, KeyFrameControllerComponent, 0, 10, {P1x:0.0, P1y:0.0, P2x:1.0, P2y:1.0});
-        c = factory.create("c1", true);
+        c = factory.create(1, true);
         c.from = 10;
         c.duration = 10;
     });
@@ -31,7 +31,7 @@ describe("KeyFrameController", () => {
         it("instanciated KeyFrameControllerComponent should have it state set to stopped", () => {
             
             expect(c.from + c.duration).to.equal(20);
-            expect(factory.get("c1").playState).to.equal(PlaybackState.stopped);
+            expect(factory.get(1).playState).to.equal(PlaybackState.stopped);
         });
         it("set playstate to started when timeRef >= from and <= from+duration", () => {
             expect(c.from + c.duration).to.equal(20);
@@ -40,12 +40,15 @@ describe("KeyFrameController", () => {
             incrementFrameEvent(e);
             expect(e.time).to.equal(1);
             system.process(factory, e);
-            expect(factory.get("c1").playState).to.equal(PlaybackState.stopped);
+            expect(factory.get(1).playState).to.equal;
+            (PlaybackState.stopped);
 
             incrementFrameEvent(e, 9);
             expect(e.time).to.equal(10);
             system.process(factory, e);
-            expect(factory.get("c1").playState).to.equal(PlaybackState.started);
+            expect(factory.get(1).playState).to.equal
+            (PlaybackState.started);
+            
         });
         it("set playstate to playing when timeRef >= from and <= from+duration and it was already set to started", () => {
             expect(c.from + c.duration).to.equal(20);
@@ -54,12 +57,12 @@ describe("KeyFrameController", () => {
             incrementFrameEvent(e, 11);
             expect(e.time).to.equal(11);
             system.process(factory, e);
-            expect(factory.get("c1").playState).to.equal(PlaybackState.started);
+            expect(factory.get(1).playState).to.equal(PlaybackState.started);
 
             incrementFrameEvent(e);
             expect(e.time).to.equal(12);
             system.process(factory, e);
-            expect(factory.get("c1").playState).to.equal(PlaybackState.playing);
+            expect(factory.get(1).playState).to.equal(PlaybackState.playing);
         });
         it("set playstate to ended when timeRef >= from and > from+duration and it was set as playing", () => {
             expect(c.from + c.duration).to.equal(20);
@@ -78,7 +81,7 @@ describe("KeyFrameController", () => {
             incrementFrameEvent(e, 9);
             expect(e.time).to.equal(21);
             system.process(factory, e);
-            expect(factory.get("c1").playState).to.equal(PlaybackState.ended);
+            expect(factory.get(1).playState).to.equal(PlaybackState.ended);
         });
         it("set playstate to stopped if state was set on ended", () => {
             expect(c.from + c.duration).to.equal(20);
@@ -102,7 +105,7 @@ describe("KeyFrameController", () => {
             incrementFrameEvent(e);
             expect(e.time).to.equal(22);
             system.process(factory, e);
-            expect(factory.get("c1").playState).to.equal(PlaybackState.stopped);
+            expect(factory.get(1).playState).to.equal(PlaybackState.stopped);
         });
     });
     describe("timer ", () => {
@@ -373,7 +376,7 @@ describe("KeyFrameController", () => {
             it("should set playsate to ended when all loop completed then stopped", () => {
                 let from = 1000; //1000ms
                 let duration = 1000 // 1 seconde
-                c = factory.create("c1", true);
+                c = factory.create(1, true);
                 c.from = from;
                 c.duration = duration;
                 c.cycling = true;
