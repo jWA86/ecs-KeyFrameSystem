@@ -1,10 +1,16 @@
 {
-  "name": "keyframesystem",
-  "version": "1.0.0",
+  "name": "ecs-keyframesystem",
+  "version": "0.1.0",
   "description": "keyframe system & components to be use with ecs",
-  "main": "KeyFrameSystem.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/src/KeyFrameSystem.d.ts",
   "scripts": {
-    "test": "karma start"
+    "test": "karma start",
+    "build": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jWA86/ecs-KeyFrameSystem.git"
   },
   "keywords": [
     "keyframe",
