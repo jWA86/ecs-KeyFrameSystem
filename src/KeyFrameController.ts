@@ -1,4 +1,4 @@
-import { IComponent } from "componententitysystem";
+import { IComponent } from "ecs-framework";
 export { PlaybackState, IAnimationFrameEvent, IKeyFrame, IKeyFrameController, KeyFrameControllerComponent };
 
 enum PlaybackState {

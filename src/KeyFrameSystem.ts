@@ -1,4 +1,4 @@
-import { ComponentFactory, IComponent, IComponentFactory, IFrameEvent, System } from "componententitysystem";
+import { ComponentFactory, IComponent, IComponentFactory, IFrameEvent, System } from "ecs-framework";
 import * as bezier from "../node_modules/bezier-easing/dist/bezier-easing.js";
 import { IAnimationFrameEvent, IKeyFrame, IKeyFrameController, KeyFrameControllerComponent, PlaybackState } from "../src/KeyFrameController";
 export { KeyFrameSystem, bezier };

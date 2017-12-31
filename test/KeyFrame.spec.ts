@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { ComponentFactory, IComponent, IComponentFactory, IFrameEvent } from "componententitysystem";
+import { ComponentFactory, IComponent, IComponentFactory, IFrameEvent } from "ecs-framework";
 import "mocha";
 import { IAnimationFrameEvent, IKeyFrame, IKeyFrameController, KeyFrameControllerComponent, PlaybackState } from "../src/KeyFrameController";
 import { bezier, KeyFrameSystem } from "../src/KeyFrameSystem";
@@ -421,8 +421,8 @@ describe("KeyFrameController", () => {
                 c.cycling = true;
                 c.nbLoop = 3;
                 const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
-                // start
 
+                // start
                 const nbIncrement = c.nbLoop * c.duration + c.from + 1;
                 const fps = 1000 / 60;
                 for (let i = 0; i < nbIncrement / fps; ++i) {

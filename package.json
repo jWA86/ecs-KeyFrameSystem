@@ -1,6 +1,6 @@
 {
   "name": "ecs-keyframesystem",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "keyframe system & components to be use with ecs",
   "main": "./dist/index.js",
   "types": "./dist/src/KeyFrameSystem.d.ts",
@@ -37,10 +37,11 @@
     "mkdirp": "^0.5.1",
     "mocha": "^3.5.0",
     "ts-loader": "^2.3.7",
-    "typescript": "^2.6.2"
+    "typescript": "^2.6.2",
+    "webpack": "^3.10.0"
   },
   "dependencies": {
     "bezier-easing": "^2.0.3",
-    "componententitysystem": "^0.4.3"
+    "ecs-framework": "^0.4.7"
   }
 }
