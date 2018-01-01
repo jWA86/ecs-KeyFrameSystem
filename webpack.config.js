@@ -8,7 +8,7 @@ module.exports = {
         path: path.resolve('./dist'),
         filename: "index.js",
         libraryTarget: 'umd',
-        library: 'ecs'
+        library: 'ecs-keyframesystem'
     },
     module: {
         rules: [
@@ -26,6 +26,7 @@ module.exports = {
     externals: 
     {
         "ecs-framework": "umd ecs-framework"
+
     },
     plugins: [new UglifyJSPlugin({ sourceMap : true }) ]
 };
