@@ -1,8 +1,8 @@
 const path = require('path');
-// const UglifyJSPlugin = require('uglifyjs-webpack-plugin')
+const UglifyJSPlugin = require('uglifyjs-webpack-plugin')
 
 module.exports = {
-    entry: ["./src/KeyFrameSystem.ts"],
+    entry: ["./src/entry.ts"],
     watch: false,
     output: {
         path: path.resolve('./dist'),
@@ -15,6 +15,7 @@ module.exports = {
             {
                 test: /\.ts?$/,
                 // exclude:/\.spec.ts?$/,
+                exclude: [/(node_modules)/, /\.spec.ts?$/],
                 loader: 'ts-loader'
             }
         ]
@@ -22,6 +23,9 @@ module.exports = {
     resolve: {
         extensions: [ '.ts' ]
     },
-    // plugins: [new UglifyJSPlugin({ sourceMap : true }) 
-    //    ]
+    externals: 
+    {
+        "ecs-framework": "umd ecs-framework"
+    },
+    plugins: [new UglifyJSPlugin({ sourceMap : true }) ]
 };
