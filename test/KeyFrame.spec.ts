@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { ComponentFactory, IComponent, IComponentFactory, IFrameEvent } from "ecs-framework";
 import "mocha";
 import { IAnimationFrameEvent, IKeyFrame, IKeyFrameController, KeyFrameControllerComponent, PlaybackState } from "../src/KeyFrameController";
-import { bezier, KeyFrameSystem } from "../src/KeyFrameSystem";
+import { KeyFrameSystem } from "../src/KeyFrameSystem";
 
 describe("KeyFrameController", () => {
     function incrementFrameEvent(e, delta = 1) {

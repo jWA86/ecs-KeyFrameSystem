@@ -1,1 +1,381 @@
-!function(t,e){"object"==typeof exports&&"object"==typeof module?module.exports=e(require("ecs-framework")):"function"==typeof define&&define.amd?define(["ecs-framework"],e):"object"==typeof exports?exports["ecs-keyframesystem"]=e(require("ecs-framework")):t["ecs-keyframesystem"]=e(t["ecs-framework"])}("undefined"!=typeof self?self:this,function(t){return function(t){function e(n){if(r[n])return r[n].exports;var o=r[n]={i:n,l:!1,exports:{}};return t[n].call(o.exports,o,o.exports,e),o.l=!0,o.exports}var r={};return e.m=t,e.c=r,e.d=function(t,r,n){e.o(t,r)||Object.defineProperty(t,r,{configurable:!1,enumerable:!0,get:n})},e.n=function(t){var r=t&&t.__esModule?function(){return t.default}:function(){return t};return e.d(r,"a",r),r},e.o=function(t,e){return Object.prototype.hasOwnProperty.call(t,e)},e.p="",e(e.s=1)}([function(t,e,r){"use strict";Object.defineProperty(e,"__esModule",{value:!0});var n;!function(t){t[t.started=0]="started",t[t.playing=1]="playing",t[t.ended=2]="ended",t[t.stopped=3]="stopped",t[t.paused=4]="paused"}(n||(n={})),e.PlaybackState=n;var o=function(){function t(t,e,r,o,a){void 0===a&&(a={P1x:0,P1y:0,P2x:1,P2y:1}),this.entityId=t,this.active=e,this.from=r,this.duration=o,this.easingParams=a,this.nbLoop=1,this.progress=0,this.playState=n.stopped,this.timer={count:0,delta:0,loopCount:0,reverse:!1,time:0},this.cycling=!1,this.fadeLoop=!1}return t}();e.KeyFrameControllerComponent=o},function(t,e,r){t.exports=r(2)},function(t,e,r){"use strict";Object.defineProperty(e,"__esModule",{value:!0});var n=r(0);e.KeyFrameControllerComponent=n.KeyFrameControllerComponent,e.PlaybackState=n.PlaybackState;var o=r(3);e.KeyFrameSystem=o.KeyFrameSystem},function(t,e,r){"use strict";var n=this&&this.__extends||function(){var t=Object.setPrototypeOf||{__proto__:[]}instanceof Array&&function(t,e){t.__proto__=e}||function(t,e){for(var r in e)e.hasOwnProperty(r)&&(t[r]=e[r])};return function(e,r){function n(){this.constructor=e}t(e,r),e.prototype=null===r?Object.create(r):(n.prototype=r.prototype,new n)}}();Object.defineProperty(e,"__esModule",{value:!0});var o=r(4),a=r(5);e.bezier=a;var i=r(0),u=function(t){function e(){return t.call(this)||this}return n(e,t),e.changeDirection=function(t,e){if(!(t.timer.loopCount>=t.nbLoop&&0!==t.nbLoop)){if(t.cycling)t.timer.reverse=!t.timer.reverse,t.fadeLoop||(t.timer.reverse?t.timer.time=t.duration:t.timer.time=0);else if(t.fadeLoop){var r=t.duration-t.timer.time,n=e.delta-r;t.timer.time=n}else t.timer.time=0;var o=a(t.easingParams.P1x,t.easingParams.P1y,t.easingParams.P2x,t.easingParams.P2y);t.progress=o(t.timer.time/t.duration),t.playState=i.PlaybackState.started}},e.prototype.execute=function(t,r){if(t.playState!==i.PlaybackState.paused){var n=t.timer.loopCount>=t.nbLoop&&0!==t.nbLoop;if(n&&t.playState===i.PlaybackState.ended)return t.playState=i.PlaybackState.stopped,void(t.timer.count+=1);var o=t.from*(t.timer.loopCount+1),u=t.from+t.duration*(t.timer.loopCount+1);if(t.playState===i.PlaybackState.stopped&&r.time>=o&&r.time<=u&&!n)return t.playState=i.PlaybackState.started,t.timer.count+=1,void(t.timer.reverse&&(t.timer.time=t.duration));if((t.playState===i.PlaybackState.started||t.playState===i.PlaybackState.playing)&&r.time>=o&&r.time<=u&&!n){t.playState=i.PlaybackState.playing,t.timer.reverse?t.timer.time-=r.delta:t.timer.time+=r.delta,t.timer.delta=r.delta,t.timer.count+=1;var s=a(t.easingParams.P1x,t.easingParams.P1y,t.easingParams.P2x,t.easingParams.P2y);return void(t.progress=s(t.timer.time/t.duration))}return(t.playState===i.PlaybackState.started||t.playState===i.PlaybackState.playing)&&r.time>=o&&r.time>u&&!n?(t.playState=i.PlaybackState.ended,t.timer.loopCount+=1,t.timer.count+=1,void e.changeDirection(t,r)):void 0}},e}(o.System);e.KeyFrameSystem=u},function(e,r){e.exports=t},function(t,e,r){var n,n;!function(e){t.exports=e()}(function(){return function t(e,r,o){function a(u,s){if(!r[u]){if(!e[u]){var c="function"==typeof n&&n;if(!s&&c)return n(u,!0);if(i)return i(u,!0);var f=new Error("Cannot find module '"+u+"'");throw f.code="MODULE_NOT_FOUND",f}var p=r[u]={exports:{}};e[u][0].call(p.exports,function(t){var r=e[u][1][t];return a(r||t)},p,p.exports,t,e,r,o)}return r[u].exports}for(var i="function"==typeof n&&n,u=0;u<o.length;u++)a(o[u]);return a}({1:[function(t,e,r){function n(t,e){return 1-3*e+3*t}function o(t,e){return 3*e-6*t}function a(t){return 3*t}function i(t,e,r){return((n(e,r)*t+o(e,r))*t+a(e))*t}function u(t,e,r){return 3*n(e,r)*t*t+2*o(e,r)*t+a(e)}function s(t,e,r,n,o){var a,u,s=0;do{u=e+(r-e)/2,a=i(u,n,o)-t,a>0?r=u:e=u}while(Math.abs(a)>p&&++s<l);return u}function c(t,e,r,n){for(var o=0;o<f;++o){var a=u(e,r,n);if(0===a)return e;e-=(i(e,r,n)-t)/a}return e}var f=4,p=1e-7,l=10,m=11,y=1/(m-1),d="function"==typeof Float32Array;e.exports=function(t,e,r,n){function o(e){for(var n=0,o=1,i=m-1;o!==i&&a[o]<=e;++o)n+=y;--o;var f=(e-a[o])/(a[o+1]-a[o]),p=n+f*y,l=u(p,t,r);return l>=.001?c(e,p,t,r):0===l?p:s(e,n,n+y,t,r)}if(!(0<=t&&t<=1&&0<=r&&r<=1))throw new Error("bezier x values must be in [0, 1] range");var a=d?new Float32Array(m):new Array(m);if(t!==e||r!==n)for(var f=0;f<m;++f)a[f]=i(f*y,t,r);return function(a){return t===e&&r===n?a:0===a?0:1===a?1:i(o(a),e,n)}}},{}]},{},[1])(1)})}])});
+(function webpackUniversalModuleDefinition(root, factory) {
+	if(typeof exports === 'object' && typeof module === 'object')
+		module.exports = factory(require("ecs-framework"));
+	else if(typeof define === 'function' && define.amd)
+		define(["ecs-framework"], factory);
+	else if(typeof exports === 'object')
+		exports["ecs-keyframesystem"] = factory(require("ecs-framework"));
+	else
+		root["ecs-keyframesystem"] = factory(root["ecs-framework"]);
+})(typeof self !== 'undefined' ? self : this, function(__WEBPACK_EXTERNAL_MODULE_4__) {
+return /******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+/******/
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId]) {
+/******/ 			return installedModules[moduleId].exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			i: moduleId,
+/******/ 			l: false,
+/******/ 			exports: {}
+/******/ 		};
+/******/
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/
+/******/ 		// Flag the module as loaded
+/******/ 		module.l = true;
+/******/
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/
+/******/
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+/******/
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+/******/
+/******/ 	// define getter function for harmony exports
+/******/ 	__webpack_require__.d = function(exports, name, getter) {
+/******/ 		if(!__webpack_require__.o(exports, name)) {
+/******/ 			Object.defineProperty(exports, name, {
+/******/ 				configurable: false,
+/******/ 				enumerable: true,
+/******/ 				get: getter
+/******/ 			});
+/******/ 		}
+/******/ 	};
+/******/
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = function(module) {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			function getDefault() { return module['default']; } :
+/******/ 			function getModuleExports() { return module; };
+/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		return getter;
+/******/ 	};
+/******/
+/******/ 	// Object.prototype.hasOwnProperty.call
+/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+/******/
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+/******/
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(__webpack_require__.s = 1);
+/******/ })
+/************************************************************************/
+/******/ ([
+/* 0 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var PlaybackState;
+(function (PlaybackState) {
+    // First update flag to start
+    PlaybackState[PlaybackState["started"] = 0] = "started";
+    // Next will be in playing flag for the whole duration
+    PlaybackState[PlaybackState["playing"] = 1] = "playing";
+    // Ended once it reach the end of a timeline
+    PlaybackState[PlaybackState["ended"] = 2] = "ended";
+    // Next will be in stopped until it's start again
+    PlaybackState[PlaybackState["stopped"] = 3] = "stopped";
+    PlaybackState[PlaybackState["paused"] = 4] = "paused";
+})(PlaybackState || (PlaybackState = {}));
+exports.PlaybackState = PlaybackState;
+var KeyFrameControllerComponent = /** @class */ (function () {
+    function KeyFrameControllerComponent(entityId, active, from, duration, easingParams) {
+        if (easingParams === void 0) { easingParams = { P1x: 0.0, P1y: 0.0, P2x: 1.0, P2y: 1.0 }; }
+        this.entityId = entityId;
+        this.active = active;
+        this.from = from;
+        this.duration = duration;
+        this.easingParams = easingParams;
+        this.nbLoop = 1;
+        this.progress = 0;
+        this.playState = PlaybackState.stopped;
+        this.timer = { count: 0, delta: 0, loopCount: 0, reverse: false, time: 0 };
+        this.cycling = false;
+        this.fadeLoop = false;
+    }
+    return KeyFrameControllerComponent;
+}());
+exports.KeyFrameControllerComponent = KeyFrameControllerComponent;
+
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(2);
+
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var KeyFrameController_1 = __webpack_require__(0);
+exports.KeyFrameControllerComponent = KeyFrameController_1.KeyFrameControllerComponent;
+exports.PlaybackState = KeyFrameController_1.PlaybackState;
+var KeyFrameSystem_1 = __webpack_require__(3);
+exports.KeyFrameSystem = KeyFrameSystem_1.KeyFrameSystem;
+
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var ecs_framework_1 = __webpack_require__(4);
+var bezier = __webpack_require__(5);
+var KeyFrameController_1 = __webpack_require__(0);
+var KeyFrameSystem = /** @class */ (function (_super) {
+    __extends(KeyFrameSystem, _super);
+    function KeyFrameSystem() {
+        return _super.call(this) || this;
+    }
+    KeyFrameSystem.changeDirection = function (c, timeRef) {
+        if (c.timer.loopCount >= c.nbLoop && c.nbLoop !== 0) {
+            return;
+        }
+        // looping back from start
+        if (!c.cycling) {
+            if (c.fadeLoop) {
+                var delta = c.duration - c.timer.time;
+                var toStartDelta = timeRef.delta - delta;
+                c.timer.time = toStartDelta;
+            }
+            else {
+                c.timer.time = 0;
+            }
+        }
+        else {
+            // cycling
+            c.timer.reverse = !c.timer.reverse;
+            if (c.fadeLoop) {
+            }
+            else {
+                if (c.timer.reverse) {
+                    c.timer.time = c.duration;
+                }
+                else {
+                    c.timer.time = 0;
+                }
+            }
+        }
+        var b = bezier(c.easingParams.P1x, c.easingParams.P1y, c.easingParams.P2x, c.easingParams.P2y);
+        c.progress = b(c.timer.time / c.duration);
+        c.playState = KeyFrameController_1.PlaybackState.started;
+    };
+    KeyFrameSystem.prototype.execute = function (c, timeRef) {
+        // if paused don't update
+        if (c.playState === KeyFrameController_1.PlaybackState.paused) {
+            return;
+        }
+        var loopEnded = c.timer.loopCount >= c.nbLoop && c.nbLoop !== 0;
+        // if loopCount reached but not yet set to stopped
+        if (loopEnded && c.playState === KeyFrameController_1.PlaybackState.ended) {
+            c.playState = KeyFrameController_1.PlaybackState.stopped;
+            c.timer.count += 1;
+            return;
+        }
+        // relative time
+        var rFrom = c.from * (c.timer.loopCount + 1);
+        var rEnd = c.from + c.duration * (c.timer.loopCount + 1);
+        // start
+        if ((c.playState === KeyFrameController_1.PlaybackState.stopped)
+            && timeRef.time >= rFrom && timeRef.time <= rEnd && !loopEnded) {
+            c.playState = KeyFrameController_1.PlaybackState.started;
+            c.timer.count += 1;
+            // when we start directly in reverse
+            if (c.timer.reverse) {
+                c.timer.time = c.duration;
+            }
+            return;
+        }
+        else if ((c.playState === KeyFrameController_1.PlaybackState.started || c.playState === KeyFrameController_1.PlaybackState.playing)
+            && timeRef.time >= rFrom
+            && timeRef.time <= rEnd
+            && !loopEnded) {
+            // playing
+            c.playState = KeyFrameController_1.PlaybackState.playing;
+            if (!c.timer.reverse) {
+                c.timer.time += timeRef.delta;
+            }
+            else {
+                c.timer.time -= timeRef.delta;
+            }
+            c.timer.delta = timeRef.delta;
+            c.timer.count += 1;
+            var b = bezier(c.easingParams.P1x, c.easingParams.P1y, c.easingParams.P2x, c.easingParams.P2y);
+            c.progress = b(c.timer.time / c.duration);
+            return;
+        }
+        else if ((c.playState === KeyFrameController_1.PlaybackState.started || c.playState === KeyFrameController_1.PlaybackState.playing)
+            && timeRef.time >= rFrom
+            && timeRef.time > rEnd
+            && !loopEnded) {
+            // ending
+            // when looping playState is set to ended only when all loop have completed otherwise it will set back to started
+            //
+            // a keyframe can be started and ended without being played if it duration is 1 for exemple
+            // usefull for keyframe that trigger event but have no animation
+            c.playState = KeyFrameController_1.PlaybackState.ended;
+            c.timer.loopCount += 1;
+            c.timer.count += 1;
+            KeyFrameSystem.changeDirection(c, timeRef);
+            return;
+        }
+    };
+    return KeyFrameSystem;
+}(ecs_framework_1.System));
+exports.KeyFrameSystem = KeyFrameSystem;
+
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports) {
+
+module.exports = __WEBPACK_EXTERNAL_MODULE_4__;
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var require;var require;(function(f){if(true){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.BezierEasing = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return require(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+/**
+ * https://github.com/gre/bezier-easing
+ * BezierEasing - use bezier curve for transition easing function
+ * by Gaëtan Renaudeau 2014 - 2015 – MIT License
+ */
+
+// These values are established by empiricism with tests (tradeoff: performance VS precision)
+var NEWTON_ITERATIONS = 4;
+var NEWTON_MIN_SLOPE = 0.001;
+var SUBDIVISION_PRECISION = 0.0000001;
+var SUBDIVISION_MAX_ITERATIONS = 10;
+
+var kSplineTableSize = 11;
+var kSampleStepSize = 1.0 / (kSplineTableSize - 1.0);
+
+var float32ArraySupported = typeof Float32Array === 'function';
+
+function A (aA1, aA2) { return 1.0 - 3.0 * aA2 + 3.0 * aA1; }
+function B (aA1, aA2) { return 3.0 * aA2 - 6.0 * aA1; }
+function C (aA1)      { return 3.0 * aA1; }
+
+// Returns x(t) given t, x1, and x2, or y(t) given t, y1, and y2.
+function calcBezier (aT, aA1, aA2) { return ((A(aA1, aA2) * aT + B(aA1, aA2)) * aT + C(aA1)) * aT; }
+
+// Returns dx/dt given t, x1, and x2, or dy/dt given t, y1, and y2.
+function getSlope (aT, aA1, aA2) { return 3.0 * A(aA1, aA2) * aT * aT + 2.0 * B(aA1, aA2) * aT + C(aA1); }
+
+function binarySubdivide (aX, aA, aB, mX1, mX2) {
+  var currentX, currentT, i = 0;
+  do {
+    currentT = aA + (aB - aA) / 2.0;
+    currentX = calcBezier(currentT, mX1, mX2) - aX;
+    if (currentX > 0.0) {
+      aB = currentT;
+    } else {
+      aA = currentT;
+    }
+  } while (Math.abs(currentX) > SUBDIVISION_PRECISION && ++i < SUBDIVISION_MAX_ITERATIONS);
+  return currentT;
+}
+
+function newtonRaphsonIterate (aX, aGuessT, mX1, mX2) {
+ for (var i = 0; i < NEWTON_ITERATIONS; ++i) {
+   var currentSlope = getSlope(aGuessT, mX1, mX2);
+   if (currentSlope === 0.0) {
+     return aGuessT;
+   }
+   var currentX = calcBezier(aGuessT, mX1, mX2) - aX;
+   aGuessT -= currentX / currentSlope;
+ }
+ return aGuessT;
+}
+
+module.exports = function bezier (mX1, mY1, mX2, mY2) {
+  if (!(0 <= mX1 && mX1 <= 1 && 0 <= mX2 && mX2 <= 1)) {
+    throw new Error('bezier x values must be in [0, 1] range');
+  }
+
+  // Precompute samples table
+  var sampleValues = float32ArraySupported ? new Float32Array(kSplineTableSize) : new Array(kSplineTableSize);
+  if (mX1 !== mY1 || mX2 !== mY2) {
+    for (var i = 0; i < kSplineTableSize; ++i) {
+      sampleValues[i] = calcBezier(i * kSampleStepSize, mX1, mX2);
+    }
+  }
+
+  function getTForX (aX) {
+    var intervalStart = 0.0;
+    var currentSample = 1;
+    var lastSample = kSplineTableSize - 1;
+
+    for (; currentSample !== lastSample && sampleValues[currentSample] <= aX; ++currentSample) {
+      intervalStart += kSampleStepSize;
+    }
+    --currentSample;
+
+    // Interpolate to provide an initial guess for t
+    var dist = (aX - sampleValues[currentSample]) / (sampleValues[currentSample + 1] - sampleValues[currentSample]);
+    var guessForT = intervalStart + dist * kSampleStepSize;
+
+    var initialSlope = getSlope(guessForT, mX1, mX2);
+    if (initialSlope >= NEWTON_MIN_SLOPE) {
+      return newtonRaphsonIterate(aX, guessForT, mX1, mX2);
+    } else if (initialSlope === 0.0) {
+      return guessForT;
+    } else {
+      return binarySubdivide(aX, intervalStart, intervalStart + kSampleStepSize, mX1, mX2);
+    }
+  }
+
+  return function BezierEasing (x) {
+    if (mX1 === mY1 && mX2 === mY2) {
+      return x; // linear
+    }
+    // Because JavaScript number are imprecise, we should guarantee the extremes are right.
+    if (x === 0) {
+      return 0;
+    }
+    if (x === 1) {
+      return 1;
+    }
+    return calcBezier(getTForX(x), mY1, mY2);
+  };
+};
+
+},{}]},{},[1])(1)
+});
+
+/***/ })
+/******/ ]);
+});

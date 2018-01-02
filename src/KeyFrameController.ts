@@ -1,5 +1,5 @@
 import { IComponent } from "ecs-framework";
-export { PlaybackState, IAnimationFrameEvent, IKeyFrame, IKeyFrameController, KeyFrameControllerComponent };
+export { PlaybackState, IAnimationFrameEvent, IBezierParams, IKeyFrame, IKeyFrameController, KeyFrameControllerComponent };
 
 enum PlaybackState {
     // First update flag to start
@@ -21,12 +21,12 @@ interface IAnimationFrameEvent {
     time: number; // the total amount of time passed since the first frame event in seconds
 }
 
-interface IbezierParams { P1x: number; P1y: number; P2x: number; P2y: number; }
+interface IBezierParams { P1x: number; P1y: number; P2x: number; P2y: number; }
 
 interface IKeyFrame {
     from: number;
     duration: number;
-    easingParams: IbezierParams;
+    easingParams: IBezierParams;
 }
 
 interface IKeyFrameController {
@@ -45,6 +45,6 @@ class KeyFrameControllerComponent implements IKeyFrameController, IKeyFrame, ICo
     public timer: IAnimationFrameEvent = { count: 0, delta: 0, loopCount: 0, reverse: false, time: 0 };
     public cycling: boolean = false;
     public fadeLoop: boolean = false;
-    constructor(public entityId, public active, public from: number, public duration: number, public easingParams: IbezierParams = { P1x: 0.0, P1y: 0.0, P2x: 1.0, P2y: 1.0 }) {
+    constructor(public entityId, public active, public from: number, public duration: number, public easingParams: IBezierParams = { P1x: 0.0, P1y: 0.0, P2x: 1.0, P2y: 1.0 }) {
     }
 }
