@@ -1,11 +1,11 @@
-import { IComponent } from "ecs-framework";
+import { interfaces } from "ecs-framework";
 export { PlaybackState, IAnimationFrameEvent, IBezierParams, IKeyFrame, IKeyFrameController, KeyFrameControllerComponent };
 declare enum PlaybackState {
     "started" = 0,
     "playing" = 1,
     "ended" = 2,
     "stopped" = 3,
-    "paused" = 4,
+    "paused" = 4
 }
 interface IAnimationFrameEvent {
     count: number;
@@ -33,7 +33,7 @@ interface IKeyFrameController {
     fadeLoop: boolean;
     nbLoop: number;
 }
-declare class KeyFrameControllerComponent implements IKeyFrameController, IKeyFrame, IComponent {
+declare class KeyFrameControllerComponent implements IKeyFrameController, IKeyFrame, interfaces.IComponent {
     entityId: any;
     active: any;
     from: number;

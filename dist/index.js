@@ -156,87 +156,92 @@ var bezier = __webpack_require__(5);
 var KeyFrameController_1 = __webpack_require__(0);
 var KeyFrameSystem = /** @class */ (function (_super) {
     __extends(KeyFrameSystem, _super);
-    function KeyFrameSystem() {
-        return _super.call(this) || this;
+    function KeyFrameSystem(params) {
+        return _super.call(this, params) || this;
     }
-    KeyFrameSystem.changeDirection = function (c, timeRef) {
-        if (c.timer.loopCount >= c.nbLoop && c.nbLoop !== 0) {
+    KeyFrameSystem.changeDirection = function (params, timeRef) {
+        if (params.t.timer.loopCount >= params.n.nbLoop && params.n.nbLoop !== 0) {
             return;
         }
         // looping back from start
-        if (!c.cycling) {
-            if (c.fadeLoop) {
-                var delta = c.duration - c.timer.time;
+        if (!params.c.cycling) {
+            if (params.f.fadeLoop) {
+                var delta = params.d.duration - params.t.timer.time;
                 var toStartDelta = timeRef.delta - delta;
-                c.timer.time = toStartDelta;
+                params.t.timer.time = toStartDelta;
             }
             else {
-                c.timer.time = 0;
+                params.t.timer.time = 0;
             }
         }
         else {
             // cycling
-            c.timer.reverse = !c.timer.reverse;
-            if (c.fadeLoop) {
+            params.t.timer.reverse = !params.t.timer.reverse;
+            if (params.f.fadeLoop) {
             }
             else {
-                if (c.timer.reverse) {
-                    c.timer.time = c.duration;
+                if (params.t.timer.reverse) {
+                    params.t.timer.time = params.d.duration;
                 }
                 else {
-                    c.timer.time = 0;
+                    params.t.timer.time = 0;
                 }
             }
         }
-        var b = bezier(c.easingParams.P1x, c.easingParams.P1y, c.easingParams.P2x, c.easingParams.P2y);
-        c.progress = b(c.timer.time / c.duration);
-        c.playState = KeyFrameController_1.PlaybackState.started;
+        var b = bezier(params.e.easingParams.P1x, params.e.easingParams.P1y, params.e.easingParams.P2x, params.e.easingParams.P2y);
+        params.pr.progress = b(params.t.timer.time / params.d.duration);
+        params.pl.playState = KeyFrameController_1.PlaybackState.started;
     };
-    KeyFrameSystem.prototype.execute = function (c, timeRef) {
+    // playStateC: {playState: PlaybackState}
+    // timerC: {timer: IAnimationFrameEvent }
+    // nbLoopC: { nbLoop: number }
+    // fromC: { from: number }
+    // durationC: {duration: number}
+    KeyFrameSystem.prototype.execute = function (params, timeRef) {
         // if paused don't update
-        if (c.playState === KeyFrameController_1.PlaybackState.paused) {
+        if (params.pl.playState === KeyFrameController_1.PlaybackState.paused) {
             return;
         }
-        var loopEnded = c.timer.loopCount >= c.nbLoop && c.nbLoop !== 0;
-        // if loopCount reached but not yet set to stopped
-        if (loopEnded && c.playState === KeyFrameController_1.PlaybackState.ended) {
-            c.playState = KeyFrameController_1.PlaybackState.stopped;
-            c.timer.count += 1;
+        var loopEnded = params.t.timer.loopCount >= params.n.nbLoop && params.n.nbLoop !== 0;
+        // if loopCount reached end but not yet set to stopped
+        if (loopEnded && params.pl.playState === KeyFrameController_1.PlaybackState.ended) {
+            params.pl.playState = KeyFrameController_1.PlaybackState.stopped;
+            params.t.timer.count += 1;
             return;
         }
         // relative time
-        var rFrom = c.from * (c.timer.loopCount + 1);
-        var rEnd = c.from + c.duration * (c.timer.loopCount + 1);
+        var rFrom = params.fr.from * (params.t.timer.loopCount + 1);
+        var rEnd = params.fr.from + params.d.duration * (params.t.timer.loopCount + 1);
         // start
-        if ((c.playState === KeyFrameController_1.PlaybackState.stopped)
+        if ((params.pl.playState === KeyFrameController_1.PlaybackState.stopped)
             && timeRef.time >= rFrom && timeRef.time <= rEnd && !loopEnded) {
-            c.playState = KeyFrameController_1.PlaybackState.started;
-            c.timer.count += 1;
+            params.pl.playState = KeyFrameController_1.PlaybackState.started;
+            params.t.timer.count += 1;
             // when we start directly in reverse
-            if (c.timer.reverse) {
-                c.timer.time = c.duration;
+            if (params.t.timer.reverse) {
+                params.t.timer.time = params.d.duration;
             }
             return;
         }
-        else if ((c.playState === KeyFrameController_1.PlaybackState.started || c.playState === KeyFrameController_1.PlaybackState.playing)
+        else if ((params.pl.playState === KeyFrameController_1.PlaybackState.started || params.pl.playState === KeyFrameController_1.PlaybackState.playing)
             && timeRef.time >= rFrom
             && timeRef.time <= rEnd
             && !loopEnded) {
             // playing
-            c.playState = KeyFrameController_1.PlaybackState.playing;
-            if (!c.timer.reverse) {
-                c.timer.time += timeRef.delta;
+            params.pl.playState = KeyFrameController_1.PlaybackState.playing;
+            if (!params.t.timer.reverse) {
+                params.t.timer.time += timeRef.delta;
             }
             else {
-                c.timer.time -= timeRef.delta;
+                params.t.timer.time -= timeRef.delta;
             }
-            c.timer.delta = timeRef.delta;
-            c.timer.count += 1;
-            var b = bezier(c.easingParams.P1x, c.easingParams.P1y, c.easingParams.P2x, c.easingParams.P2y);
-            c.progress = b(c.timer.time / c.duration);
+            params.t.timer.delta = timeRef.delta;
+            params.t.timer.count += 1;
+            var b = bezier(params.e.easingParams.P1x, params.e.easingParams.P1y, params.e.easingParams.P2x, params.e.easingParams.P2y);
+            params.pr.progress = b(params.t.timer.time / params.d.duration);
             return;
         }
-        else if ((c.playState === KeyFrameController_1.PlaybackState.started || c.playState === KeyFrameController_1.PlaybackState.playing)
+        else if ((params.pl.playState === KeyFrameController_1.PlaybackState.started || params.pl.playState === KeyFrameController_1.PlaybackState.playing)
             && timeRef.time >= rFrom
             && timeRef.time > rEnd
             && !loopEnded) {
@@ -245,10 +250,10 @@ var KeyFrameSystem = /** @class */ (function (_super) {
             //
             // a keyframe can be started and ended without being played if it duration is 1 for exemple
             // usefull for keyframe that trigger event but have no animation
-            c.playState = KeyFrameController_1.PlaybackState.ended;
-            c.timer.loopCount += 1;
-            c.timer.count += 1;
-            KeyFrameSystem.changeDirection(c, timeRef);
+            params.pl.playState = KeyFrameController_1.PlaybackState.ended;
+            params.t.timer.loopCount += 1;
+            params.t.timer.count += 1;
+            KeyFrameSystem.changeDirection(params, timeRef);
             return;
         }
     };

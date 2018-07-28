@@ -1,5 +1,4 @@
 const path = require('path');
-const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
 
 module.exports = {
     entry: ["./src/entry.ts"],
@@ -26,7 +25,7 @@ module.exports = {
     externals: 
     {
         "ecs-framework": "umd ecs-framework",
-        "bezier-easing": "bezier-easing"
+        "bezier-easing": "umd bezier-easing"
 
     },
     // plugins: [new UglifyJSPlugin({ sourceMap : true }) ]

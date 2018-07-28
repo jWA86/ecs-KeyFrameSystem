@@ -19,6 +19,13 @@ module.exports = function(config) {
             dir : 'coverage/'
           },
 
+          karmaTypescriptConfig: {
+            compilerOptions: {
+                module: "commonjs"
+            },
+            tsconfig: "./tsconfig.json",
+        },
+
         singleRun: false,
         concurrency: Infinity
     });
