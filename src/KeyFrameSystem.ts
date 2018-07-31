@@ -11,12 +11,23 @@ interface IKeyFrameParams {
     c: { cycling: boolean };
     f: { fadeLoop: boolean };
     fr: { from: number };
-    d: { duration: number};
+    d: { duration: number };
     e: { easingParams: IBezierParams };
 }
 
-class KeyFrameSystem extends System<IKeyFrameParams> {
+const defaultKeyFrameParam: IKeyFrameParams = {
+    c: { cycling: false },
+    d: { duration: 0 },
+    e: { easingParams: { P1x: 0.0, P1y: 0.0, P2x: 1.0, P2y: 1.0 } },
+    f: { fadeLoop: false },
+    fr: { from: 0 },
+    n: { nbLoop: 0 },
+    pl: { playState: PlaybackState.stopped },
+    pr: { progress: 0 },
+    t: { timer: { count: 0, delta: 0, loopCount: 0, reverse: false, time: 0 } },
+};
 
+class KeyFrameSystem extends System<IKeyFrameParams> {
     protected static changeDirection(params: IKeyFrameParams, timeRef: interfaces.IFrameEvent) {
         if (params.t.timer.loopCount >= params.n.nbLoop && params.n.nbLoop !== 0) { return; }
         // looping back from start
@@ -45,14 +56,11 @@ class KeyFrameSystem extends System<IKeyFrameParams> {
         params.pr.progress = b(params.t.timer.time / params.d.duration);
         params.pl.playState = PlaybackState.started;
     }
-    constructor(params: IKeyFrameParams) {
-        super(params);
+
+    protected _parameters: IKeyFrameParams = defaultKeyFrameParam;
+    constructor() {
+        super();
     }
-    // playStateC: {playState: PlaybackState}
-    // timerC: {timer: IAnimationFrameEvent }
-    // nbLoopC: { nbLoop: number }
-    // fromC: { from: number }
-    // durationC: {duration: number}
 
     public execute(params: IKeyFrameParams, timeRef: interfaces.IFrameEvent) {
         // if paused don't update

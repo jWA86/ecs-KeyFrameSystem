@@ -34,7 +34,7 @@ describe("KeyFrameController", () => {
     let c: KeyFrameControllerComponent;
 
     beforeEach(() => {
-        system = new KeyFrameSystem(defaultKeyFrameParam);
+        system = new KeyFrameSystem();
         factory = new ComponentFactory<KeyFrameControllerComponent>(10, new KeyFrameControllerComponent(0, true, 0, 0, Object.assign({}, defaultKeyFrameParam.e.easingParams)));
         c = factory.create(1, true);
         c.from = 10;
@@ -52,7 +52,7 @@ describe("KeyFrameController", () => {
 
             incrementFrameEvent(e);
             expect(e.time).to.equal(1);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             expect(factory.get(c.entityId).playState).to.equal(PlaybackState.stopped);
 
@@ -60,7 +60,7 @@ describe("KeyFrameController", () => {
             expect(e.time).to.equal(10);
             expect(e.time, "timeRef not >= component from").to.be.gte(c.from);
             expect(e.time, "timeRef is not <= component from+duration").to.be.lte(c.from + c.duration);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             expect(factory.get(c.entityId).playState, "component playstate is not set to started").to.equal(PlaybackState.started);
 
@@ -71,13 +71,13 @@ describe("KeyFrameController", () => {
 
             incrementFrameEvent(e, 11);
             expect(e.time).to.equal(11);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             expect(factory.get(1).playState).to.equal(PlaybackState.started);
 
             incrementFrameEvent(e);
             expect(e.time).to.equal(12);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             expect(factory.get(1).playState).to.equal(PlaybackState.playing);
         });
@@ -88,17 +88,17 @@ describe("KeyFrameController", () => {
             // start
             incrementFrameEvent(e, 11);
             expect(e.time).to.equal(11);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
 
             // playing
             incrementFrameEvent(e);
             expect(e.time).to.equal(12);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             incrementFrameEvent(e, 9);
             expect(e.time).to.equal(21);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e); expect(factory.get(1).playState).to.equal(PlaybackState.ended);
         });
         it("set playstate to stopped if state was set on ended", () => {
@@ -107,21 +107,21 @@ describe("KeyFrameController", () => {
             // start
             incrementFrameEvent(e, 11);
             expect(e.time).to.equal(11);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             // playing
             incrementFrameEvent(e);
             expect(e.time).to.equal(12);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             // ended
             incrementFrameEvent(e, 9);
             expect(e.time).to.equal(21);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             incrementFrameEvent(e);
             expect(e.time).to.equal(22);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             expect(factory.get(1).playState).to.equal(PlaybackState.stopped);
         });
@@ -135,19 +135,19 @@ describe("KeyFrameController", () => {
             // start
             incrementFrameEvent(e, 11);
             expect(e.time).to.equal(11);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             // playing
             incrementFrameEvent(e);
             expect(e.time).to.equal(12);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             expect(e.delta).to.equal(1);
             expect(c.timer.time).to.equal(1);
 
             incrementFrameEvent(e);
             expect(e.time).to.equal(13);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             expect(e.delta).to.equal(1);
             expect(c.timer.time).to.equal(2);
@@ -159,12 +159,12 @@ describe("KeyFrameController", () => {
             const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
             c.timer.reverse = true;
             incrementFrameEvent(e);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             expect(c.timer.time).to.equal(0);
 
             incrementFrameEvent(e, 9);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             expect(c.timer.time).to.equal(c.duration);
 
@@ -174,17 +174,17 @@ describe("KeyFrameController", () => {
             const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
             c.timer.reverse = true;
             incrementFrameEvent(e);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             expect(c.timer.time).to.equal(0);
 
             incrementFrameEvent(e, 9);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             expect(c.timer.time).to.equal(c.duration);
 
             incrementFrameEvent(e);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             expect(c.timer.time).to.equal(c.duration - 1);
         });
@@ -198,10 +198,10 @@ describe("KeyFrameController", () => {
             const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
             c.nbLoop = 2;
             incrementFrameEvent(e, 10);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             incrementFrameEvent(e, 11);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             expect(c.playState).to.equal(PlaybackState.started);
 
@@ -211,10 +211,10 @@ describe("KeyFrameController", () => {
             const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
             c.nbLoop = 2;
             incrementFrameEvent(e, 10);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             incrementFrameEvent(e, 11);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             expect(c.playState).to.equal(PlaybackState.started);
             expect(c.timer.time).to.equal(0);
@@ -226,10 +226,10 @@ describe("KeyFrameController", () => {
             c.nbLoop = 2;
             expect(c.timer.loopCount).to.equal(0);
             incrementFrameEvent(e, 10);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             incrementFrameEvent(e, 11);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             expect(c.timer.loopCount).to.equal(1);
         });
@@ -240,18 +240,18 @@ describe("KeyFrameController", () => {
             c.nbLoop = 2;
             expect(c.timer.loopCount).to.equal(0);
             incrementFrameEvent(e, 10);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             incrementFrameEvent(e, 11);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             expect(c.timer.loopCount).to.equal(1);
 
             incrementFrameEvent(e);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             incrementFrameEvent(e, 10);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             expect(c.timer.loopCount).to.equal(2);
         });
@@ -261,19 +261,19 @@ describe("KeyFrameController", () => {
             c.nbLoop = 0;
             expect(c.timer.loopCount).to.equal(0);
             incrementFrameEvent(e, 10);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             incrementFrameEvent(e, 11);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             expect(c.timer.loopCount).to.equal(1);
 
             incrementFrameEvent(e, 10);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             expect(c.timer.loopCount).to.equal(2);
             incrementFrameEvent(e, 10);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             expect(c.timer.loopCount).to.equal(3);
 
@@ -288,21 +288,21 @@ describe("KeyFrameController", () => {
             c.nbLoop = 1;
             expect(c.timer.loopCount).to.equal(0);
             incrementFrameEvent(e, 10);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             incrementFrameEvent(e, 11);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             expect(c.timer.loopCount).to.equal(1);
 
             incrementFrameEvent(e, 10);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             expect(c.playState).to.equal(PlaybackState.stopped);
             expect(c.timer.loopCount).to.equal(1);
 
             incrementFrameEvent(e, 5);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             expect(c.playState).to.equal(PlaybackState.stopped);
             expect(c.timer.loopCount).to.equal(1);
@@ -316,10 +316,10 @@ describe("KeyFrameController", () => {
 
                 expect(c.timer.loopCount).to.equal(0);
                 incrementFrameEvent(e, 10);
-                system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+                system.setParamSource("*", factory);
                 system.process(e);
                 incrementFrameEvent(e, 11);
-                system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+                system.setParamSource("*", factory);
                 system.process(e);
                 expect(c.timer.loopCount).to.equal(1);
             });
@@ -330,10 +330,10 @@ describe("KeyFrameController", () => {
                 c.nbLoop = 2;
 
                 incrementFrameEvent(e, 10);
-                system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+                system.setParamSource("*", factory);
                 system.process(e);
                 incrementFrameEvent(e, 11);
-                system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+                system.setParamSource("*", factory);
                 system.process(e);
                 expect(c.playState).to.equal(PlaybackState.started);
             });
@@ -344,10 +344,10 @@ describe("KeyFrameController", () => {
                 c.nbLoop = 2;
 
                 incrementFrameEvent(e, 10);
-                system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+                system.setParamSource("*", factory);
                 system.process(e);
                 incrementFrameEvent(e, 11);
-                system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+                system.setParamSource("*", factory);
                 system.process(e);
                 expect(c.playState).to.equal(PlaybackState.started);
                 expect(c.timer.time).to.equal(c.duration);
@@ -359,12 +359,12 @@ describe("KeyFrameController", () => {
                 c.nbLoop = 2;
 
                 incrementFrameEvent(e, 10);
-                system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+                system.setParamSource("*", factory);
                 system.process(e);
                 expect(c.timer.reverse).to.equal(false);
 
                 incrementFrameEvent(e, 11);
-                system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+                system.setParamSource("*", factory);
                 system.process(e);
 
                 expect(c.playState).to.equal(PlaybackState.started);
@@ -378,21 +378,21 @@ describe("KeyFrameController", () => {
                 c.nbLoop = 3;
 
                 incrementFrameEvent(e, 10);
-                system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+                system.setParamSource("*", factory);
                 system.process(e);
 
                 incrementFrameEvent(e, 11);
-                system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+                system.setParamSource("*", factory);
                 system.process(e);
                 expect(c.timer.loopCount).to.equal(1);
 
                 incrementFrameEvent(e);
-                system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+                system.setParamSource("*", factory);
                 system.process(e);
                 expect(c.timer.time).to.equal(9);
 
                 incrementFrameEvent(e, 11);
-                system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+                system.setParamSource("*", factory);
                 system.process(e);
                 expect(c.timer.time).to.equal(0);
                 expect(c.timer.loopCount).to.equal(2);
@@ -404,26 +404,26 @@ describe("KeyFrameController", () => {
                 c.nbLoop = 3;
 
                 incrementFrameEvent(e, 10);
-                system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+                system.setParamSource("*", factory);
                 system.process(e);
 
                 incrementFrameEvent(e, 11);
-                system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+                system.setParamSource("*", factory);
                 system.process(e);
                 expect(c.timer.loopCount).to.equal(1);
 
                 incrementFrameEvent(e);
-                system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+                system.setParamSource("*", factory);
                 system.process(e);
 
                 incrementFrameEvent(e, 10);
-                system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+                system.setParamSource("*", factory);
                 system.process(e);
                 expect(c.timer.time).to.equal(0);
                 expect(c.timer.loopCount).to.equal(2);
 
                 incrementFrameEvent(e, 2);
-                system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+                system.setParamSource("*", factory);
                 system.process(e);
                 expect(c.timer.time).to.equal(2);
             });
@@ -442,7 +442,7 @@ describe("KeyFrameController", () => {
                 const fps = 1000 / 60;
                 for (let i = 0; i < nbIncrement / fps; ++i) {
                     incrementFrameEvent(e, fps);
-                    system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+                    system.setParamSource("*", factory);
                     system.process(e);
                 }
 
@@ -450,7 +450,7 @@ describe("KeyFrameController", () => {
                 expect(c.playState).to.equal(PlaybackState.ended);
 
                 incrementFrameEvent(e, fps);
-                system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+                system.setParamSource("*", factory);
                 system.process(e);
 
                 expect(c.playState).to.equal(PlaybackState.stopped);
@@ -476,13 +476,13 @@ describe("KeyFrameController", () => {
             // start
             incrementFrameEvent(e, 10);
             expect(e.time).to.equal(10);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
 
             // playing
             incrementFrameEvent(e, 5);
             expect(e.time).to.equal(15);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             expect(e.delta).to.equal(5);
             expect(c.timer.time).to.equal(5);
@@ -501,13 +501,13 @@ describe("KeyFrameController", () => {
             // start
             incrementFrameEvent(e, 10);
             expect(e.time).to.equal(10);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
 
             // playing
             incrementFrameEvent(e, 5);
             expect(e.time).to.equal(15);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             expect(e.delta).to.equal(5);
             expect(c.timer.time).to.equal(5);
@@ -515,7 +515,7 @@ describe("KeyFrameController", () => {
             expect(c.progress).to.not.equal(0.5);
 
             incrementFrameEvent(e, 5);
-            system.setParamsSource(factory, factory, factory, factory, factory, factory, factory, factory, factory);
+            system.setParamSource("*", factory);
             system.process(e);
             expect(e.time).to.equal(20);
             expect(c.timer.time).to.equal(10);
