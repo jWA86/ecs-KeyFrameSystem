@@ -154,10 +154,23 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var ecs_framework_1 = __webpack_require__(4);
 var bezier = __webpack_require__(5);
 var KeyFrameController_1 = __webpack_require__(0);
+var defaultKeyFrameParam = {
+    c: { cycling: false },
+    d: { duration: 0 },
+    e: { easingParams: { P1x: 0.0, P1y: 0.0, P2x: 1.0, P2y: 1.0 } },
+    f: { fadeLoop: false },
+    fr: { from: 0 },
+    n: { nbLoop: 0 },
+    pl: { playState: KeyFrameController_1.PlaybackState.stopped },
+    pr: { progress: 0 },
+    t: { timer: { count: 0, delta: 0, loopCount: 0, reverse: false, time: 0 } },
+};
 var KeyFrameSystem = /** @class */ (function (_super) {
     __extends(KeyFrameSystem, _super);
-    function KeyFrameSystem(params) {
-        return _super.call(this, params) || this;
+    function KeyFrameSystem() {
+        var _this = _super.call(this) || this;
+        _this._parameters = defaultKeyFrameParam;
+        return _this;
     }
     KeyFrameSystem.changeDirection = function (params, timeRef) {
         if (params.t.timer.loopCount >= params.n.nbLoop && params.n.nbLoop !== 0) {
@@ -192,11 +205,6 @@ var KeyFrameSystem = /** @class */ (function (_super) {
         params.pr.progress = b(params.t.timer.time / params.d.duration);
         params.pl.playState = KeyFrameController_1.PlaybackState.started;
     };
-    // playStateC: {playState: PlaybackState}
-    // timerC: {timer: IAnimationFrameEvent }
-    // nbLoopC: { nbLoop: number }
-    // fromC: { from: number }
-    // durationC: {duration: number}
     KeyFrameSystem.prototype.execute = function (params, timeRef) {
         // if paused don't update
         if (params.pl.playState === KeyFrameController_1.PlaybackState.paused) {

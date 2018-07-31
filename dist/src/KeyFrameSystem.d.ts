@@ -32,6 +32,7 @@ interface IKeyFrameParams {
 }
 declare class KeyFrameSystem extends System<IKeyFrameParams> {
     protected static changeDirection(params: IKeyFrameParams, timeRef: interfaces.IFrameEvent): void;
-    constructor(params: IKeyFrameParams);
+    protected _parameters: IKeyFrameParams;
+    constructor();
     execute(params: IKeyFrameParams, timeRef: interfaces.IFrameEvent): void;
 }
