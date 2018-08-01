@@ -1,6 +1,6 @@
 {
   "name": "ecs-keyframesystem",
-  "version": "2.1.0",
+  "version": "1.0.0-alpha",
   "description": "keyframe system & components to be use with ecs",
   "main": "./dist/index.js",
   "types": "./dist/src/entry.d.ts",
@@ -41,7 +41,7 @@
     "webpack": "^3.10.0"
   },
   "dependencies": {
-    "ecs-framework": "^9.4.7-pre-alpha",
-    "bezier-easing": "^2.0.3"
+    "bezier-easing": "^2.0.3",
+    "ecs-framework": "^9.6.7-pre-alpha"
   }
 }
