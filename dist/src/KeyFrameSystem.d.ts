@@ -2,37 +2,19 @@ import { interfaces, System } from "ecs-framework";
 import { IAnimationFrameEvent, IBezierParams, PlaybackState } from "./KeyFrameController";
 export { KeyFrameSystem, IKeyFrameParams };
 interface IKeyFrameParams {
-    n: {
-        nbLoop: number;
-    };
-    pr: {
-        progress: number;
-    };
-    pl: {
-        playState: PlaybackState;
-    };
-    t: {
-        timer: IAnimationFrameEvent;
-    };
-    c: {
-        cycling: boolean;
-    };
-    f: {
-        fadeLoop: boolean;
-    };
-    fr: {
-        from: number;
-    };
-    d: {
-        duration: number;
-    };
-    e: {
-        easingParams: IBezierParams;
-    };
+    nbLoop: number;
+    progress: number;
+    playState: PlaybackState;
+    timer: IAnimationFrameEvent;
+    cycling: boolean;
+    fadeLoop: boolean;
+    from: number;
+    duration: number;
+    easingParams: IBezierParams;
 }
 declare class KeyFrameSystem extends System<IKeyFrameParams> {
-    protected static changeDirection(params: IKeyFrameParams, timeRef: interfaces.IFrameEvent): void;
-    protected _parameters: IKeyFrameParams;
+    protected _defaultParameter: IKeyFrameParams;
     constructor();
     execute(params: IKeyFrameParams, timeRef: interfaces.IFrameEvent): void;
+    protected changeDirection(params: IKeyFrameParams, timeRef: interfaces.IFrameEvent): void;
 }

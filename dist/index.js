@@ -155,101 +155,68 @@ var ecs_framework_1 = __webpack_require__(4);
 var bezier = __webpack_require__(5);
 var KeyFrameController_1 = __webpack_require__(0);
 var defaultKeyFrameParam = {
-    c: { cycling: false },
-    d: { duration: 0 },
-    e: { easingParams: { P1x: 0.0, P1y: 0.0, P2x: 1.0, P2y: 1.0 } },
-    f: { fadeLoop: false },
-    fr: { from: 0 },
-    n: { nbLoop: 0 },
-    pl: { playState: KeyFrameController_1.PlaybackState.stopped },
-    pr: { progress: 0 },
-    t: { timer: { count: 0, delta: 0, loopCount: 0, reverse: false, time: 0 } },
+    cycling: false,
+    duration: 0,
+    easingParams: { P1x: 0.0, P1y: 0.0, P2x: 1.0, P2y: 1.0 },
+    fadeLoop: false,
+    from: 0,
+    nbLoop: 0,
+    playState: KeyFrameController_1.PlaybackState.stopped,
+    progress: 0,
+    timer: { count: 0, delta: 0, loopCount: 0, reverse: false, time: 0 },
 };
 var KeyFrameSystem = /** @class */ (function (_super) {
     __extends(KeyFrameSystem, _super);
     function KeyFrameSystem() {
         var _this = _super.call(this) || this;
-        _this._parameters = defaultKeyFrameParam;
+        _this._defaultParameter = defaultKeyFrameParam;
         return _this;
     }
-    KeyFrameSystem.changeDirection = function (params, timeRef) {
-        if (params.t.timer.loopCount >= params.n.nbLoop && params.n.nbLoop !== 0) {
-            return;
-        }
-        // looping back from start
-        if (!params.c.cycling) {
-            if (params.f.fadeLoop) {
-                var delta = params.d.duration - params.t.timer.time;
-                var toStartDelta = timeRef.delta - delta;
-                params.t.timer.time = toStartDelta;
-            }
-            else {
-                params.t.timer.time = 0;
-            }
-        }
-        else {
-            // cycling
-            params.t.timer.reverse = !params.t.timer.reverse;
-            if (params.f.fadeLoop) {
-            }
-            else {
-                if (params.t.timer.reverse) {
-                    params.t.timer.time = params.d.duration;
-                }
-                else {
-                    params.t.timer.time = 0;
-                }
-            }
-        }
-        var b = bezier(params.e.easingParams.P1x, params.e.easingParams.P1y, params.e.easingParams.P2x, params.e.easingParams.P2y);
-        params.pr.progress = b(params.t.timer.time / params.d.duration);
-        params.pl.playState = KeyFrameController_1.PlaybackState.started;
-    };
     KeyFrameSystem.prototype.execute = function (params, timeRef) {
         // if paused don't update
-        if (params.pl.playState === KeyFrameController_1.PlaybackState.paused) {
+        if (params.playState[this._k.playState] === KeyFrameController_1.PlaybackState.paused) {
             return;
         }
-        var loopEnded = params.t.timer.loopCount >= params.n.nbLoop && params.n.nbLoop !== 0;
+        var loopEnded = params.timer[this._k.timer].loopCount >= params.nbLoop[this._k.nbLoop] && params.nbLoop[this._k.nbLoop] !== 0;
         // if loopCount reached end but not yet set to stopped
-        if (loopEnded && params.pl.playState === KeyFrameController_1.PlaybackState.ended) {
-            params.pl.playState = KeyFrameController_1.PlaybackState.stopped;
-            params.t.timer.count += 1;
+        if (loopEnded && params.playState[this._k.playState] === KeyFrameController_1.PlaybackState.ended) {
+            params.playState[this._k.playState] = KeyFrameController_1.PlaybackState.stopped;
+            params.timer[this._k.timer].count += 1;
             return;
         }
         // relative time
-        var rFrom = params.fr.from * (params.t.timer.loopCount + 1);
-        var rEnd = params.fr.from + params.d.duration * (params.t.timer.loopCount + 1);
+        var rFrom = params.from[this._k.from] * (params.timer[this._k.timer].loopCount + 1);
+        var rEnd = params.from[this._k.from] + params.duration[this._k.duration] * (params.timer[this._k.timer].loopCount + 1);
         // start
-        if ((params.pl.playState === KeyFrameController_1.PlaybackState.stopped)
+        if ((params.playState[this._k.playState] === KeyFrameController_1.PlaybackState.stopped)
             && timeRef.time >= rFrom && timeRef.time <= rEnd && !loopEnded) {
-            params.pl.playState = KeyFrameController_1.PlaybackState.started;
-            params.t.timer.count += 1;
+            params.playState[this._k.playState] = KeyFrameController_1.PlaybackState.started;
+            params.timer[this._k.timer].count += 1;
             // when we start directly in reverse
-            if (params.t.timer.reverse) {
-                params.t.timer.time = params.d.duration;
+            if (params.timer[this._k.timer].reverse) {
+                params.timer[this._k.timer].time = params.duration[this._k.duration];
             }
             return;
         }
-        else if ((params.pl.playState === KeyFrameController_1.PlaybackState.started || params.pl.playState === KeyFrameController_1.PlaybackState.playing)
+        else if ((params.playState[this._k.playState] === KeyFrameController_1.PlaybackState.started || params.playState[this._k.playState] === KeyFrameController_1.PlaybackState.playing)
             && timeRef.time >= rFrom
             && timeRef.time <= rEnd
             && !loopEnded) {
             // playing
-            params.pl.playState = KeyFrameController_1.PlaybackState.playing;
-            if (!params.t.timer.reverse) {
-                params.t.timer.time += timeRef.delta;
+            params.playState[this._k.playState] = KeyFrameController_1.PlaybackState.playing;
+            if (!params.timer[this._k.timer].reverse) {
+                params.timer[this._k.timer].time += timeRef.delta;
             }
             else {
-                params.t.timer.time -= timeRef.delta;
+                params.timer[this._k.timer].time -= timeRef.delta;
             }
-            params.t.timer.delta = timeRef.delta;
-            params.t.timer.count += 1;
-            var b = bezier(params.e.easingParams.P1x, params.e.easingParams.P1y, params.e.easingParams.P2x, params.e.easingParams.P2y);
-            params.pr.progress = b(params.t.timer.time / params.d.duration);
+            params.timer[this._k.timer].delta = timeRef.delta;
+            params.timer[this._k.timer].count += 1;
+            var b = bezier(params.easingParams[this._k.easingParams].P1x, params.easingParams[this._k.easingParams].P1y, params.easingParams[this._k.easingParams].P2x, params.easingParams[this._k.easingParams].P2y);
+            params.progress[this._k.progress] = b(params.timer[this._k.timer].time / params.duration[this._k.duration]);
             return;
         }
-        else if ((params.pl.playState === KeyFrameController_1.PlaybackState.started || params.pl.playState === KeyFrameController_1.PlaybackState.playing)
+        else if ((params.playState[this._k.playState] === KeyFrameController_1.PlaybackState.started || params.playState[this._k.playState] === KeyFrameController_1.PlaybackState.playing)
             && timeRef.time >= rFrom
             && timeRef.time > rEnd
             && !loopEnded) {
@@ -258,12 +225,45 @@ var KeyFrameSystem = /** @class */ (function (_super) {
             //
             // a keyframe can be started and ended without being played if it duration is 1 for exemple
             // usefull for keyframe that trigger event but have no animation
-            params.pl.playState = KeyFrameController_1.PlaybackState.ended;
-            params.t.timer.loopCount += 1;
-            params.t.timer.count += 1;
-            KeyFrameSystem.changeDirection(params, timeRef);
+            params.playState[this._k.playState] = KeyFrameController_1.PlaybackState.ended;
+            params.timer[this._k.timer].loopCount += 1;
+            params.timer[this._k.timer].count += 1;
+            this.changeDirection(params, timeRef);
             return;
         }
+    };
+    KeyFrameSystem.prototype.changeDirection = function (params, timeRef) {
+        if (params.timer[this._k.timer].loopCount >= params.nbLoop[this._k.nbLoop] && params.nbLoop[this._k.nbLoop] !== 0) {
+            return;
+        }
+        // looping back from start
+        if (!params.cycling[this._k.cycling]) {
+            if (params.fadeLoop[this._k.fadeLoop]) {
+                var delta = params.duration[this._k.duration] - params.timer[this._k.timer].time;
+                var toStartDelta = timeRef.delta - delta;
+                params.timer[this._k.timer].time = toStartDelta;
+            }
+            else {
+                params.timer[this._k.timer].time = 0;
+            }
+        }
+        else {
+            // cycling
+            params.timer[this._k.timer].reverse = !params.timer[this._k.timer].reverse;
+            if (params.fadeLoop[this._k.fadeLoop]) {
+            }
+            else {
+                if (params.timer[this._k.timer].reverse) {
+                    params.timer[this._k.timer].time = params.duration[this._k.duration];
+                }
+                else {
+                    params.timer[this._k.timer].time = 0;
+                }
+            }
+        }
+        var b = bezier(params.easingParams[this._k.easingParams].P1x, params.easingParams[this._k.easingParams].P1y, params.easingParams[this._k.easingParams].P2x, params.easingParams[this._k.easingParams].P2y);
+        params.progress[this._k.progress] = b(params.timer[this._k.timer].time / params.duration[this._k.duration]);
+        params.playState[this._k.playState] = KeyFrameController_1.PlaybackState.started;
     };
     return KeyFrameSystem;
 }(ecs_framework_1.System));
