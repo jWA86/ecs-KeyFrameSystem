@@ -3,6 +3,7 @@ import { IAnimationFrameEvent, IBezierParams, PlaybackState } from "./KeyFrameCo
 export { KeyFrameSystem, IKeyFrameParams };
 interface IKeyFrameParams {
     nbLoop: number;
+    previousProgress: number;
     progress: number;
     playState: PlaybackState;
     timer: IAnimationFrameEvent;

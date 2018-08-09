@@ -26,6 +26,7 @@ interface IKeyFrame {
     easingParams: IBezierParams;
 }
 interface IKeyFrameController {
+    previousProgress: number;
     progress: number;
     playState: PlaybackState;
     timer: IAnimationFrameEvent;
@@ -40,6 +41,7 @@ declare class KeyFrameControllerComponent implements IKeyFrameController, IKeyFr
     duration: number;
     easingParams: IBezierParams;
     nbLoop: number;
+    previousProgress: number;
     progress: number;
     playState: PlaybackState;
     timer: IAnimationFrameEvent;

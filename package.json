@@ -1,6 +1,6 @@
 {
   "name": "ecs-keyframesystem",
-  "version": "1.0.2-alpha",
+  "version": "1.1.0-alpha",
   "description": "keyframe system & components to be use with ecs",
   "main": "./dist/index.js",
   "types": "./dist/src/entry.d.ts",

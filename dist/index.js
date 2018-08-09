@@ -102,6 +102,7 @@ var KeyFrameControllerComponent = /** @class */ (function () {
         this.duration = duration;
         this.easingParams = easingParams;
         this.nbLoop = 1;
+        this.previousProgress = 0;
         this.progress = 0;
         this.playState = PlaybackState.stopped;
         this.timer = { count: 0, delta: 0, loopCount: 0, reverse: false, time: 0 };
@@ -162,6 +163,7 @@ var defaultKeyFrameParam = {
     from: 0,
     nbLoop: 0,
     playState: KeyFrameController_1.PlaybackState.stopped,
+    previousProgress: 0,
     progress: 0,
     timer: { count: 0, delta: 0, loopCount: 0, reverse: false, time: 0 },
 };
@@ -213,6 +215,7 @@ var KeyFrameSystem = /** @class */ (function (_super) {
             params.timer[this._k.timer].delta = timeRef.delta;
             params.timer[this._k.timer].count += 1;
             var b = bezier(params.easingParams[this._k.easingParams].P1x, params.easingParams[this._k.easingParams].P1y, params.easingParams[this._k.easingParams].P2x, params.easingParams[this._k.easingParams].P2y);
+            params.previousProgress[this._k.previousProgress] = params.progress[this._k.progress];
             params.progress[this._k.progress] = b(params.timer[this._k.timer].time / params.duration[this._k.duration]);
             return;
         }
@@ -262,6 +265,7 @@ var KeyFrameSystem = /** @class */ (function (_super) {
             }
         }
         var b = bezier(params.easingParams[this._k.easingParams].P1x, params.easingParams[this._k.easingParams].P1y, params.easingParams[this._k.easingParams].P2x, params.easingParams[this._k.easingParams].P2y);
+        params.previousProgress[this._k.previousProgress] = params.progress[this._k.progress];
         params.progress[this._k.progress] = b(params.timer[this._k.timer].time / params.duration[this._k.duration]);
         params.playState[this._k.playState] = KeyFrameController_1.PlaybackState.started;
     };
