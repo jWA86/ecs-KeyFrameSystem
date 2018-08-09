@@ -25,6 +25,7 @@ describe("KeyFrameController", () => {
         from: 0,
         nbLoop: 0,
         playState: PlaybackState.stopped,
+        previousProgress: 0,
         progress: 0,
         timer: { count: 0, delta: 0, loopCount: 0, reverse: false, time: 0 },
     };
@@ -478,6 +479,8 @@ describe("KeyFrameController", () => {
             system.process(e);
             expect(e.delta).to.equal(5);
             expect(c.timer.time).to.equal(5);
+
+            expect(c.previousProgress, "previous progress value is not under current progress value").to.be.lessThan(0.5);
 
             expect(c.progress).to.equal(0.5);
         });

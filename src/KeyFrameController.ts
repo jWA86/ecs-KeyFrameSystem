@@ -30,6 +30,7 @@ interface IKeyFrame {
 }
 
 interface IKeyFrameController {
+    previousProgress: number;
     progress: number; // 0 to 1
     playState: PlaybackState;
     timer: IAnimationFrameEvent;
@@ -40,6 +41,7 @@ interface IKeyFrameController {
 
 class KeyFrameControllerComponent implements IKeyFrameController, IKeyFrame, interfaces.IComponent {
     public nbLoop: number = 1;
+    public previousProgress: number = 0;
     public progress: number = 0;
     public playState: PlaybackState = PlaybackState.stopped;
     public timer: IAnimationFrameEvent = { count: 0, delta: 0, loopCount: 0, reverse: false, time: 0 };

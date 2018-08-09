@@ -5,6 +5,7 @@ export { KeyFrameSystem, IKeyFrameParams };
 
 interface IKeyFrameParams {
     nbLoop: number;
+    previousProgress: number;
     progress: number;
     playState: PlaybackState;
     timer: IAnimationFrameEvent;
@@ -23,6 +24,7 @@ const defaultKeyFrameParam: IKeyFrameParams = {
     from: 0,
     nbLoop: 0,
     playState: PlaybackState.stopped,
+    previousProgress: 0,
     progress: 0,
     timer: { count: 0, delta: 0, loopCount: 0, reverse: false, time: 0 },
 };
@@ -76,6 +78,9 @@ class KeyFrameSystem extends System<IKeyFrameParams> {
             params.timer[this._k.timer].delta = timeRef.delta;
             params.timer[this._k.timer].count += 1;
             const b = bezier(params.easingParams[this._k.easingParams].P1x, params.easingParams[this._k.easingParams].P1y, params.easingParams[this._k.easingParams].P2x, params.easingParams[this._k.easingParams].P2y);
+
+            params.previousProgress[this._k.previousProgress] = params.progress[this._k.progress];
+
             params.progress[this._k.progress] = b(params.timer[this._k.timer].time / params.duration[this._k.duration]);
             return;
         } else if ((params.playState[this._k.playState] === PlaybackState.started || params.playState[this._k.playState] === PlaybackState.playing)
@@ -119,6 +124,9 @@ class KeyFrameSystem extends System<IKeyFrameParams> {
         }
 
         const b = bezier(params.easingParams[this._k.easingParams].P1x, params.easingParams[this._k.easingParams].P1y, params.easingParams[this._k.easingParams].P2x, params.easingParams[this._k.easingParams].P2y);
+
+        params.previousProgress[this._k.previousProgress] = params.progress[this._k.progress];
+
         params.progress[this._k.progress] = b(params.timer[this._k.timer].time / params.duration[this._k.duration]);
         params.playState[this._k.playState] = PlaybackState.started;
     }
