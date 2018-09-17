@@ -1,42 +1,31 @@
 import { expect } from "chai";
 import { ComponentFactory, interfaces } from "ecs-framework";
 import "mocha";
-import { KeyFrameControllerComponent, PlaybackState } from "../src/KeyFrameController";
-import { IKeyFrameParams, KeyFrameSystem } from "../src/KeyFrameSystem";
-
-type IFrameEvent = interfaces.IFrameEvent;
+import { IAnimationFrameEvent, KeyFrameControllerComponent, PlaybackState } from "../src/KeyFrameController";
+import { defaultKeyFrameParam, IKeyFrameParams, KeyFrameSystem } from "../src/KeyFrameSystem";
 
 describe("KeyFrameController", () => {
-    function incrementFrameEvent(e, delta = 1) {
-        if (e.reverse) {
-            e.time -= delta;
+    function incrementFrameEvent(frameEvent: IAnimationFrameEvent, delta = 1) {
+        if (frameEvent.reverse) {
+            frameEvent.time -= delta;
         } else {
-            e.time += delta;
+            frameEvent.time += delta;
         }
-        e.delta = delta;
-        e.count += 1;
+        frameEvent.delta = delta;
+        // e.count += 1;
     }
+    const keyFrameParam: IKeyFrameParams = Object.assign({}, defaultKeyFrameParam);
 
-    const defaultKeyFrameParam: IKeyFrameParams = {
-        cycling: false,
-        duration: 0,
-        easingParams: { P1x: 0.0, P1y: 0.0, P2x: 1.0, P2y: 1.0 },
-        fadeLoop: false,
-        from: 0,
-        nbLoop: 0,
-        playState: PlaybackState.stopped,
-        previousProgress: 0,
-        progress: 0,
-        timer: { count: 0, delta: 0, loopCount: 0, reverse: false, time: 0 },
-    };
-
+    let e: IAnimationFrameEvent;
     let system: KeyFrameSystem;
     let factory: ComponentFactory<KeyFrameControllerComponent>;
     let c: KeyFrameControllerComponent;
 
     beforeEach(() => {
-        system = new KeyFrameSystem();
-        factory = new ComponentFactory<KeyFrameControllerComponent>(10, new KeyFrameControllerComponent(0, true, 0, 0, Object.assign({}, defaultKeyFrameParam.easingParams)));
+        e = Object.assign({}, defaultKeyFrameParam.timer);
+        e.playState = PlaybackState.playing;
+        system = new KeyFrameSystem(e);
+        factory = new ComponentFactory<KeyFrameControllerComponent>(10, new KeyFrameControllerComponent(0, true, 0, 0, Object.assign({}, keyFrameParam.easingParams)));
         c = factory.create(1, true);
         c.from = 10;
         c.duration = 10;
@@ -45,45 +34,50 @@ describe("KeyFrameController", () => {
     });
 
     describe("playstate", () => {
+        it("don't process any component if the timeRef playstate is set to stopped", () => {
+            e.playState = PlaybackState.stopped;
+            incrementFrameEvent(e, 10);
+            expect(e.time).to.be.gte(c.from);
+            expect(e.time).to.be.lt(c.duration + c.from);
+            system.process(e);
+            expect(factory.get(c.entityId).timer.playState).to.equal(PlaybackState.stopped);
+        });
         it("instanciated KeyFrameControllerComponent should have it state set to stopped", () => {
             expect(c.from + c.duration).to.equal(20);
-            expect(factory.get(1).playState).to.equal(PlaybackState.stopped);
+            expect(factory.get(1).timer.playState).to.equal(PlaybackState.stopped);
         });
         it("set playstate to started when timeRef >= from and <= from+duration", () => {
             expect(c.from + c.duration).to.equal(20);
-            const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
 
             incrementFrameEvent(e);
             expect(e.time).to.equal(1);
             system.process(e);
-            expect(factory.get(c.entityId).playState).to.equal(PlaybackState.stopped);
+            expect(factory.get(c.entityId).timer.playState).to.equal(PlaybackState.stopped);
 
             incrementFrameEvent(e, 9);
             expect(e.time).to.equal(10);
             expect(e.time, "timeRef not >= component from").to.be.gte(c.from);
             expect(e.time, "timeRef is not <= component from+duration").to.be.lte(c.from + c.duration);
             system.process(e);
-            expect(factory.get(c.entityId).playState, "component playstate is not set to started").to.equal(PlaybackState.started);
+            expect(factory.get(c.entityId).timer.playState, "component playstate is not set to started").to.equal(PlaybackState.started);
 
         });
         it("set playstate to playing when timeRef >= from and <= from+duration and it was already set to started", () => {
             expect(c.from + c.duration).to.equal(20);
-            const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
 
             incrementFrameEvent(e, 11);
             expect(e.time).to.equal(11);
             system.process(e);
-            expect(factory.get(1).playState).to.equal(PlaybackState.started);
+            expect(factory.get(1).timer.playState).to.equal(PlaybackState.started);
 
             incrementFrameEvent(e);
             expect(e.time).to.equal(12);
             system.process(e);
-            expect(factory.get(1).playState).to.equal(PlaybackState.playing);
+            expect(factory.get(1).timer.playState).to.equal(PlaybackState.playing);
         });
         it("set playstate to ended when timeRef >= from and > from+duration and it was set as playing", () => {
 
             expect(c.from + c.duration).to.equal(20);
-            const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
 
             // start
             incrementFrameEvent(e, 11);
@@ -100,12 +94,12 @@ describe("KeyFrameController", () => {
             system.process(e);
 
             const comp = factory.get(1);
-            expect(comp.playState, "component is set to playstate : '" + PlaybackState[comp.playState] + "' instead of 'ended' ").to.equal(PlaybackState.ended);
+            expect(comp.timer.playState, "component is set to playstate : '" + PlaybackState[comp.timer.playState] + "' instead of 'ended' ").to.equal(PlaybackState.ended);
         });
         it("set playstate to stopped if state was set on ended", () => {
 
             expect(c.from + c.duration).to.equal(20);
-            const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
+
             // start
             incrementFrameEvent(e, 11);
             expect(e.time).to.equal(11);
@@ -121,14 +115,14 @@ describe("KeyFrameController", () => {
             incrementFrameEvent(e);
             expect(e.time).to.equal(22);
             system.process(e);
-            expect(factory.get(1).playState).to.equal(PlaybackState.stopped);
+            expect(factory.get(1).timer.playState).to.equal(PlaybackState.stopped);
         });
     });
     describe("timer ", () => {
         it("in paying state increment the timer by the delta of reference timer", () => {
 
             expect(c.from + c.duration).to.equal(20);
-            const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
+
             expect(c.timer.time).to.equal(0);
 
             // start
@@ -153,7 +147,7 @@ describe("KeyFrameController", () => {
         it("start playing from the end when reverse param is set to true", () => {
 
             expect(c.from + c.duration).to.equal(20);
-            const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
+
             c.timer.reverse = true;
             incrementFrameEvent(e);
             system.process(e);
@@ -167,7 +161,7 @@ describe("KeyFrameController", () => {
         it("decrement the animation timer when playing in reverse", () => {
 
             expect(c.from + c.duration).to.equal(20);
-            const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
+
             c.timer.reverse = true;
             incrementFrameEvent(e);
             system.process(e);
@@ -188,7 +182,7 @@ describe("KeyFrameController", () => {
         });
         it("set to started when timer reach the end and toLoop is true", () => {
             expect(c.from + c.duration).to.equal(20);
-            const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
+
             c.nbLoop = 2;
             incrementFrameEvent(e, 10);
 
@@ -196,12 +190,12 @@ describe("KeyFrameController", () => {
             incrementFrameEvent(e, 11);
 
             system.process(e);
-            expect(c.playState).to.equal(PlaybackState.started);
+            expect(c.timer.playState).to.equal(PlaybackState.started);
 
         });
         it("start from 0 when looping", () => {
             expect(c.from + c.duration).to.equal(20);
-            const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
+
             c.nbLoop = 2;
             incrementFrameEvent(e, 10);
 
@@ -209,13 +203,13 @@ describe("KeyFrameController", () => {
             incrementFrameEvent(e, 11);
 
             system.process(e);
-            expect(c.playState).to.equal(PlaybackState.started);
+            expect(c.timer.playState).to.equal(PlaybackState.started);
             expect(c.timer.time).to.equal(0);
 
         });
         it("increment loopCount at the end", () => {
             expect(c.from + c.duration).to.equal(20);
-            const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
+
             c.nbLoop = 2;
             expect(c.timer.loopCount).to.equal(0);
             incrementFrameEvent(e, 10);
@@ -228,7 +222,7 @@ describe("KeyFrameController", () => {
         });
         it("loop the number of time specified by the param nbLoop", () => {
             expect(c.from + c.duration).to.equal(20);
-            const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
+
             c.cycling = false;
             c.nbLoop = 2;
             expect(c.timer.loopCount).to.equal(0);
@@ -250,7 +244,7 @@ describe("KeyFrameController", () => {
         });
         it("loop indefinitely when nbLoop is set to 0", () => {
             expect(c.from + c.duration).to.equal(20);
-            const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
+
             c.nbLoop = 0;
             expect(c.timer.loopCount).to.equal(0);
             incrementFrameEvent(e, 10);
@@ -272,11 +266,10 @@ describe("KeyFrameController", () => {
 
             expect(e.time).to.equal(41);
             expect(c.timer.time).to.equal(0);
-            expect(c.playState).to.equal(PlaybackState.started);
+            expect(c.timer.playState).to.equal(PlaybackState.started);
         });
         it("not looping when nbLoop is set to 1", () => {
             expect(c.from + c.duration).to.equal(20);
-            const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
 
             c.nbLoop = 1;
             expect(c.timer.loopCount).to.equal(0);
@@ -291,19 +284,19 @@ describe("KeyFrameController", () => {
             incrementFrameEvent(e, 10);
 
             system.process(e);
-            expect(c.playState).to.equal(PlaybackState.stopped);
+            expect(c.timer.playState).to.equal(PlaybackState.stopped);
             expect(c.timer.loopCount).to.equal(1);
 
             incrementFrameEvent(e, 5);
 
             system.process(e);
-            expect(c.playState).to.equal(PlaybackState.stopped);
+            expect(c.timer.playState).to.equal(PlaybackState.stopped);
             expect(c.timer.loopCount).to.equal(1);
         });
         describe("looping in reverse", () => {
             it("increment the loopCount when looping in reverse", () => {
                 expect(c.from + c.duration).to.equal(20);
-                const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
+
                 c.cycling = true;
                 c.nbLoop = 2;
 
@@ -318,7 +311,7 @@ describe("KeyFrameController", () => {
             });
             it("set to started when looping in reverse", () => {
                 expect(c.from + c.duration).to.equal(20);
-                const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
+
                 c.cycling = true;
                 c.nbLoop = 2;
 
@@ -328,11 +321,11 @@ describe("KeyFrameController", () => {
                 incrementFrameEvent(e, 11);
 
                 system.process(e);
-                expect(c.playState).to.equal(PlaybackState.started);
+                expect(c.timer.playState).to.equal(PlaybackState.started);
             });
             it("start with timer set to duration instead of 0", () => {
                 expect(c.from + c.duration).to.equal(20);
-                const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
+
                 c.cycling = true;
                 c.nbLoop = 2;
 
@@ -342,12 +335,12 @@ describe("KeyFrameController", () => {
                 incrementFrameEvent(e, 11);
 
                 system.process(e);
-                expect(c.playState).to.equal(PlaybackState.started);
+                expect(c.timer.playState).to.equal(PlaybackState.started);
                 expect(c.timer.time).to.equal(c.duration);
             });
             it("have the timer set to reverse when looping in reverse", () => {
                 expect(c.from + c.duration).to.equal(20);
-                const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
+
                 c.cycling = true;
                 c.nbLoop = 2;
 
@@ -360,13 +353,13 @@ describe("KeyFrameController", () => {
 
                 system.process(e);
 
-                expect(c.playState).to.equal(PlaybackState.started);
+                expect(c.timer.playState).to.equal(PlaybackState.started);
                 expect(c.timer.time).to.equal(c.duration);
                 expect(c.timer.reverse).to.equal(true);
             });
             it("increment the loopCount when time reach 0 while it was playing in reverse", () => {
                 expect(c.from + c.duration).to.equal(20);
-                const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
+
                 c.cycling = true;
                 c.nbLoop = 3;
 
@@ -392,7 +385,7 @@ describe("KeyFrameController", () => {
             });
             it("increment timer when reach 0", () => {
                 expect(c.from + c.duration).to.equal(20);
-                const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
+
                 c.cycling = true;
                 c.nbLoop = 3;
 
@@ -428,7 +421,6 @@ describe("KeyFrameController", () => {
                 c.duration = duration;
                 c.cycling = true;
                 c.nbLoop = 3;
-                const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
 
                 // start
                 const nbIncrement = c.nbLoop * c.duration + c.from + 1;
@@ -440,13 +432,100 @@ describe("KeyFrameController", () => {
                 }
 
                 expect(e.time).to.be.at.least(nbIncrement);
-                expect(c.playState).to.equal(PlaybackState.ended);
+                expect(c.timer.playState).to.equal(PlaybackState.ended);
 
                 incrementFrameEvent(e, fps);
 
                 system.process(e);
 
-                expect(c.playState).to.equal(PlaybackState.stopped);
+                expect(c.timer.playState).to.equal(PlaybackState.stopped);
+            });
+            it("should be able to start from the end when the parent timer increment in reverse", () => {
+                const parentTimeLine = factory.get(1);
+                parentTimeLine.from = 10;
+                parentTimeLine.duration = 20;
+                parentTimeLine.cycling = true;
+                parentTimeLine.nbLoop = 0;
+
+                const childKeyFramePool = new ComponentFactory<KeyFrameControllerComponent>(2, new KeyFrameControllerComponent(0, true, 0, 0));
+                const childKFSys = new KeyFrameSystem(parentTimeLine.timer);
+                childKFSys.setParamSource("*", childKeyFramePool);
+
+                const c1 = childKeyFramePool.create(1, true);
+                c1.from = 0;
+                c1.duration = 10;
+                // c1.cycling = true;
+                c1.nbLoop = 0;
+
+                const c2 = childKeyFramePool.create(2, true);
+                c2.from = 10;
+                c2.duration = 10;
+                // c2.cycling = true;
+                c2.nbLoop = 0;
+
+                incrementFrameEvent(e);
+                expect(parentTimeLine.timer.playState).to.equal(PlaybackState.stopped);
+                system.process();
+                expect(childKFSys.timeRef.time).to.equal(0);
+
+                incrementFrameEvent(e, 9);
+                system.process();
+                childKFSys.process();
+                expect(parentTimeLine.timer.playState).to.equal(PlaybackState.started);
+                // make sure the timer in the childSys is a reference
+                expect(childKFSys.timeRef.playState).to.equal(PlaybackState.started);
+                expect(c1.timer.playState, "child component c1 playstate wasn't set to started").to.equal(PlaybackState.started);
+
+                incrementFrameEvent(e);
+                system.process();
+                childKFSys.process();
+                expect(childKFSys.timeRef.time).to.equal(1);
+                expect(parentTimeLine.timer.time).to.equal(1);
+                expect(parentTimeLine.timer.playState).to.equal(PlaybackState.playing);
+                expect(childKFSys.timeRef.playState).to.equal(PlaybackState.playing);
+                expect(c1.timer.playState, "child component c1 playstate wasn't set to playing").to.equal(PlaybackState.playing);
+                expect(c1.timer.time).to.equal(1);
+                expect(c2.timer.playState, "child component c2 playstate should be equal to stopped").to.equal(PlaybackState.stopped);
+
+                incrementFrameEvent(e, 10);
+                expect(e.time).to.equal(21);
+                system.process();
+                childKFSys.process();
+                console.log(c1.timer);
+                expect(c1.timer.playState, "child component c1 playstate wasn't set to ended").to.equal(PlaybackState.ended);
+                expect(c2.timer.playState, "child component c2 playstate should have been started").to.equal(PlaybackState.started);
+
+                incrementFrameEvent(e, 10);
+                expect(e.time).to.equal(31);
+                system.process();
+                childKFSys.process();
+                expect(parentTimeLine.timer.playState).to.equal(PlaybackState.ended);
+
+                incrementFrameEvent(e);
+                expect(e.time).to.equal(32);
+                system.process();
+                childKFSys.process();
+                expect(parentTimeLine.timer.playState).to.equal(PlaybackState.stopped);
+                // should child be set to stopped if parent is stopped or ended ?
+                console.log(parentTimeLine.timer);
+                console.log(c1.timer);
+                console.log(c2.timer);
+
+                incrementFrameEvent(e, 2);
+                expect(e.time).to.equal(34);
+                system.process();
+                childKFSys.process();
+                console.log(parentTimeLine.timer);
+                console.log(c1.timer);
+                console.log(c2.timer);
+
+                incrementFrameEvent(e, 5);
+                expect(e.time).to.equal(39);
+                system.process();
+                childKFSys.process();
+                console.log(parentTimeLine.timer);
+                console.log(c1.timer);
+                console.log(c2.timer);
             });
 
         });
@@ -461,7 +540,7 @@ describe("KeyFrameController", () => {
         });
         it("by defaut progress indicate the linear progression of the timeline", () => {
             expect(c.from + c.duration).to.equal(20);
-            const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
+
             expect(c.timer.time).to.equal(0);
 
             expect(c.progress).to.equal(0);
@@ -488,7 +567,7 @@ describe("KeyFrameController", () => {
             c.easingParams = { P1x: 0.25, P1y: 0.1, P2x: 0.25, P2y: 1.0 };
 
             expect(c.from + c.duration).to.equal(20);
-            const e: IFrameEvent = { delta: 0, time: 0, MS_PER_UPDATE: 0, lag: 0, lastFrame: Date.now() };
+
             expect(c.timer.time).to.equal(0);
 
             expect(c.progress).to.equal(0);
