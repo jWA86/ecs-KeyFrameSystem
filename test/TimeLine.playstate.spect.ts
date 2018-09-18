@@ -4,7 +4,7 @@ import "mocha";
 import EasingFunctions from "../src/EasingFunctions";
 import { AnimationDirection, FillMode, ITimelineParams, PlaybackDirection, PlayState, TimelineSystem } from "../src/TimeLine";
 
-describe.only("TimeLine playstate", () => {
+describe("TimeLine playstate", () => {
     let system: TimelineSystem;
     const defaultTimeLineParams: ITimelineParams = {
         active: true,
@@ -12,17 +12,18 @@ describe.only("TimeLine playstate", () => {
         delta: 0,
         duration: 0,
         easing: "linear" as keyof EasingFunctions,
-        endDelay: 0,
+        // endDelay: 0,
         entityId: 0,
         fill: FillMode.both,
         iterationStart: 0,
         iterations: 1,
         playDirection: PlaybackDirection.normal,
         playRate: 1,
-        startDelay: 0,
+        progress: 0,
+        // startDelay: 0,
         startTime: 0,
         state: PlayState.idle,
-        time: 0,
+        time: null,
     };
 
     let frameEvent: interfaces.IFrameEvent = {
@@ -33,11 +34,6 @@ describe.only("TimeLine playstate", () => {
         state: "idle",
         time: 0,
     };
-
-    // const incrementFrameEvent = (fE: interfaces.IFrameEvent, inc = 1, delta = 0) => {
-    //     fE.time += 1;
-    //     fE.delta = delta;
-    // };
 
     let tmPool: ComponentFactory<ITimelineParams>;
 
@@ -71,7 +67,7 @@ describe.only("TimeLine playstate", () => {
         });
     });
     describe("running", () => {
-        it("should be set to active when parent timeline >= timeLine.startTime", () => {
+        it("should be set to 'running' when parent timeline >= timeLine.startTime", () => {
             const tm1 = tmPool.create(1, true);
             tm1.startTime = 10;
             tm1.duration = 10;
@@ -87,13 +83,79 @@ describe.only("TimeLine playstate", () => {
             expect(frameEvent.time).to.equal(tm1.startTime);
             expect(tm1.state, "timeline component is in state '" + PlayState[tm1.state] + "' instead of 'running'").to.equal(PlayState.running);
         });
+        // it("startDelay should offset the setting of 'running' ", () => {
+        //     const tm1 = tmPool.create(1, true);
+        //     tm1.startTime = 10;
+        //     tm1.duration = 10;
+        //     tm1.startDelay = 5;
+
+        //     frameEvent.state = "running";
+        //     frameEvent.time = 4;
+        //     system.process(frameEvent);
+        //     expect(tm1.state, "timeline component is in state " + PlayState[tm1.state] + " instead of idle").to.equal(PlayState.idle);
+
+        //     frameEvent.time = 6;
+        //     system.process(frameEvent);
+        //     expect(tm1.state, "timeline component is in state " + PlayState[tm1.state] + " instead of idle").to.equal(PlayState.idle);
+
+        //     frameEvent.time = 10;
+        //     system.process(frameEvent);
+        //     expect(tm1.state, "timeline component is in state " + PlayState[tm1.state] + " instead of idle").to.equal(PlayState.idle);
+
+        //     frameEvent.time = 15;
+        //     system.process(frameEvent);
+        //     expect(tm1.state, "timeline component is in state " + PlayState[tm1.state] + " instead of running").to.equal(PlayState.running);
+
+        //     frameEvent.time = 20;
+        //     system.process(frameEvent);
+        //     expect(tm1.state, "timeline component is in state " + PlayState[tm1.state] + " instead of running").to.equal(PlayState.running);
+
+        //     frameEvent.time = 25;
+        //     system.process(frameEvent);
+        //     expect(tm1.state, "timeline component is in state " + PlayState[tm1.state] + " instead of finished").to.equal(PlayState.finished);
+        // });
+        // it("negative startDelay should ", () => {
+        //     const tm1 = tmPool.create(1, true);
+        //     tm1.startTime = 10;
+        //     tm1.duration = 10;
+        //     tm1.startDelay = -5;
+
+        //     frameEvent.state = "running";
+        //     frameEvent.time = 4;
+        //     system.process(frameEvent);
+        //     expect(tm1.state, "timeline component is in state " + PlayState[tm1.state] + " instead of idle").to.equal(PlayState.idle);
+
+        //     frameEvent.time = 5;
+        //     system.process(frameEvent);
+        //     console.log(PlayState[tm1.state]);
+        //     expect(tm1.state, "timeline component is in state " + PlayState[tm1.state] + " instead of running").to.equal(PlayState.running);
+
+        //     frameEvent.time = 10;
+        //     system.process(frameEvent);
+        //     console.log(PlayState[tm1.state]);
+        //     // expect(tm1.state, "timeline component is in state " + PlayState[tm1.state] + " instead of running").to.equal(PlayState.running);
+
+        //     frameEvent.time = 15;
+        //     system.process(frameEvent);
+        //     console.log(PlayState[tm1.state]);
+        //     // expect(tm1.state, "timeline component is in state " + PlayState[tm1.state] + " instead of finished").to.equal(PlayState.finished);
+
+        //     frameEvent.time = 20;
+        //     system.process(frameEvent);
+        //     console.log(PlayState[tm1.state]);
+        //     expect(tm1.state, "timeline component is in state " + PlayState[tm1.state] + " instead of finished").to.equal(PlayState.finished);
+
+        //     frameEvent.time = 15;
+        //     system.process(frameEvent);
+        //     expect(tm1.state, "timeline component is in state " + PlayState[tm1.state] + " instead of running").to.equal(PlayState.running);
+        // });
     });
     describe("finished", () => {
         it("should be set to finished when parentTimeLine === timeline endTime", () => {
             const tm1 = tmPool.create(1, true);
             tm1.startTime = 10;
             tm1.duration = 10;
-            const endTime = system.endTime(tm1.startDelay, system.activeDuration(10, 1), tm1.endDelay);
+            const endTime = system.endTime(0, system.activeDuration(10, 1), 0);
 
             frameEvent.time = tm1.startTime + endTime;
             frameEvent.state = "running";
@@ -105,7 +167,7 @@ describe.only("TimeLine playstate", () => {
             const tm1 = tmPool.create(1, true);
             tm1.startTime = 10;
             tm1.duration = 10;
-            const endTime = system.endTime(tm1.startDelay, system.activeDuration(10, 1), tm1.endDelay);
+            const endTime = system.endTime(0, system.activeDuration(10, 1), 0);
 
             frameEvent.time = tm1.startTime + endTime + 10;
             frameEvent.state = "running";
@@ -113,6 +175,12 @@ describe.only("TimeLine playstate", () => {
             expect(frameEvent.time).to.be.greaterThan(tm1.startTime + tm1.duration);
             expect(tm1.state, "timeline component is in state '" + PlayState[tm1.state] + "' instead of 'finished'").to.equal(PlayState.finished);
         });
+        // it("endDelay", () => {
+
+        // });
+        // it("negative endDelay", () => {
+
+        // });
     });
     describe("paused", () => {
         it("should be paused if parentTimeline is paused", () => {

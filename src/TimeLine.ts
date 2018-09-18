@@ -43,9 +43,9 @@ export enum PlayState {
 export interface ITimingOptions {
     duration: number;
     startTime: number; // relative to the parent timeline
-    startDelay: number; // offset from the startTime, use to compute iterationStart (ie: skip part)
+    // startDelay: number; // offset from the startTime, use to compute iterationStart (ie: skip part)
     iterationStart: number | null; // ie: 0.5 would start half way
-    endDelay: number; // offset from the end
+    // endDelay: number; // offset from the end
     playRate: number;
     playDirection: PlaybackDirection; // direction to be played at each repetition
     iterations: number; // the number of iterations to be played
@@ -55,14 +55,19 @@ export interface ITimingOptions {
 }
 
 export interface IParentTimeline extends interfaces.IComponent {
-    time: number;
+    time: number; // current time
     playRate: number;
     currentDirection: AnimationDirection;
     state: PlayState;
     delta: number;
 }
 
-export interface ITimelineParams extends IParentTimeline, ITimingOptions {
+export interface ITimelineProgress extends interfaces.IComponent {
+    progress: number; // overall progress
+    iterationProgress: number;
+}
+
+export interface ITimelineParams extends IParentTimeline, ITimingOptions, ITimelineProgress {
 
 }
 
@@ -87,21 +92,64 @@ export class TimelineSystem extends System<ITimelineParams> {
     }
 
     public execute(params: ITimelineParams, parentTimeline: IParentTimeline): ITimelineParams {
-        const localTime = this.computeLocalTime(parentTimeline.time, params.startTime, parentTimeline.playRate);
+        const startDelay = 0;
+        const endDelay = 0;
+        const localTime = this.computeLocalTime(parentTimeline.time, params.startTime, params.playRate);
         const currentDirection = parentTimeline.currentDirection;
-        const iterationDuration = params.startDelay + params.duration; // ?? iterationDuration === params.duration ?
+        // const iterationDuration = params.startDelay + params.duration; // ?? iterationDuration === params.duration ?
+        const iterationDuration = params.duration;
         const activeDuration = this.activeDuration(iterationDuration, params.iterations);
-        const endTime = this.endTime(params.startDelay, activeDuration, params.endDelay);
-        const beforeActiveBT = this.beforeActiveBoundaryTime(params.startDelay, endTime);
-        const activeAfterBT = this.activeAfterBoundaryTime(params.startDelay, activeDuration, endTime);
+        const endTime = this.endTime(startDelay, activeDuration, endDelay);
+        const beforeActiveBT = this.beforeActiveBoundaryTime(startDelay, endTime);
+        const activeAfterBT = this.activeAfterBoundaryTime(startDelay, activeDuration, endTime);
         const currentPhase = this.phase(localTime, currentDirection, beforeActiveBT, activeAfterBT);
+
         const playState = this.playState(parentTimeline.currentDirection, currentPhase, parentTimeline.state);
+        const activeTime = this.activeTime(currentPhase, localTime, startDelay, params.fill, activeDuration);
+        const progress = isNaN(activeTime) ? null : this.overallProgress(currentPhase, activeTime, iterationDuration, params.iterations, params.iterationStart);
+        const iterationProgress = this.iterationProgress(currentPhase, params.iterationStart, progress, activeTime, iterationDuration, params.iterations);
+
+        params.progress = progress;
+        params.iterationProgress = iterationProgress;
         params.state = playState;
+        params.time = localTime;
         return params;
     }
 
+    public overallProgress(phase: Phase, activeTime: number, iterationDuration: number, iterationCount: number, iterationStart: number) {
+        let progress = 0;
+        if (iterationDuration === 0) {
+            if (phase === Phase.before) {
+                progress = 0;
+            } else {
+                progress = iterationCount;
+            }
+        } else {
+            progress = activeTime / iterationDuration;
+        }
+        return progress + iterationStart;
+    }
+
+    /** The simple iteration progress is a fraction of the progress through the current iteration that ignores transformations to the time introduced by the playback direction or timing functions applied to the effect, and is calculated as follows:
+     */
+    public iterationProgress(currentPhase: Phase, iterationStart: number, overallProgress: number, activeTime: number, iterationDuration: number, iterationCount: number) {
+        let iterationProgress = 0;
+        if (overallProgress === null) {
+            iterationProgress = null;
+        } else if (!isFinite(overallProgress)) {
+            iterationProgress = iterationStart % 1.0;
+        } else {
+            iterationProgress = overallProgress % 1.0;
+        }
+
+        if (iterationProgress === 0 && currentPhase === Phase.after && iterationCount !== 0 && (activeTime !== 0 || iterationDuration === 0)) {
+            iterationProgress = 1.0;
+        }
+        return iterationProgress;
+    }
+
     // 3.9.3.1. Calculating the active time
-    public activeTime = (phase: Phase, localTime: number, startDelay: number, fill: FillMode, activeDuration: number): number => {
+    public activeTime(phase: Phase, localTime: number, startDelay: number, fill: FillMode, activeDuration: number): number {
         switch (phase) {
             case Phase.before:
                 if (fill === FillMode.backwards || fill === FillMode.both) {
@@ -110,7 +158,6 @@ export class TimelineSystem extends System<ITimelineParams> {
                 break;
             case Phase.active:
                 return localTime - startDelay;
-                break;
             case Phase.after:
                 if (fill === FillMode.forwards || fill === FillMode.both) {
                     return Math.max(Math.min(localTime - startDelay, activeDuration), 0);
@@ -120,7 +167,7 @@ export class TimelineSystem extends System<ITimelineParams> {
                 break;
         }
     }
-
+    /** Time relative to startTime */
     public computeLocalTime(timeLineTime: number, startTime: number, playBackRate) {
         return (timeLineTime - startTime) * playBackRate;
     }
@@ -146,7 +193,9 @@ export class TimelineSystem extends System<ITimelineParams> {
     }
 
     public phase(localTime: number, animationDirection: AnimationDirection, beforeActiveBoundaryTime: number, activeAfterBoundaryTime: number): Phase {
-
+        // console.log(localTime);
+        // console.log("before: " + beforeActiveBoundaryTime);
+        // console.log("after: " + activeAfterBoundaryTime);
         // before phase
         if (localTime < beforeActiveBoundaryTime) {
             return Phase.before;
