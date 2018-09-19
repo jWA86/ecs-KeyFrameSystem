@@ -1,17 +1,20 @@
 import { expect } from "chai";
 import { ComponentFactory, interfaces } from "ecs-framework";
 import "mocha";
-import EasingFunctions from "../src/EasingFunctions";
+import { IEasingFunctions } from "../src/EasingFunctions";
 import { AnimationDirection, FillMode, ITimelineParams, PlaybackDirection, PlayState, TimelineSystem } from "../src/TimeLine";
 
 describe.only("TimeLine playstate", () => {
     let system: TimelineSystem;
     const defaultTimeLineParams: ITimelineParams = {
         active: true,
+        bezier: null,
         currentDirection: AnimationDirection.forwards,
+        currentIteration: 0,
         delta: 0,
+        directedProgress: null,
         duration: 0,
-        easing: "linear" as keyof EasingFunctions,
+        easingFunction: "linear" as keyof IEasingFunctions,
         // endDelay: 0,
         entityId: 0,
         fill: FillMode.both,
@@ -25,6 +28,7 @@ describe.only("TimeLine playstate", () => {
         startTime: 0,
         state: PlayState.idle,
         time: null,
+        transformedProgress: null,
     };
 
     let frameEvent: interfaces.IFrameEvent = {
@@ -247,7 +251,7 @@ describe.only("TimeLine playstate", () => {
         });
     });
     describe("iteration progress", () => {
-        it.only("return the progress of the current iteration", () => {
+        it("return the progress of the current iteration", () => {
             const tm1 = tmPool.create(1, true);
             tm1.startTime = 10;
             tm1.duration = 10;
@@ -281,13 +285,179 @@ describe.only("TimeLine playstate", () => {
         });
     });
     describe("current iteration", () => {
+        it("should is the nth iteration", () => {
+            const tm1 = tmPool.create(1, true);
+            tm1.startTime = 10;
+            tm1.duration = 10;
+            tm1.iterations = 3;
 
+            frameEvent.state = "running";
+            frameEvent.time = 5;
+            system.process(frameEvent);
+            expect(tm1.currentIteration).to.eq(0);
+
+            frameEvent.time = 10;
+            system.process(frameEvent);
+            expect(tm1.currentIteration).to.eq(0);
+
+            frameEvent.time = 15;
+            system.process(frameEvent);
+            expect(tm1.currentIteration).to.eq(0);
+
+            frameEvent.time = 20;
+            system.process(frameEvent);
+            expect(tm1.currentIteration).to.eq(1);
+
+            frameEvent.time = 25;
+            system.process(frameEvent);
+            expect(tm1.currentIteration).to.eq(1);
+
+            frameEvent.time = 30;
+            system.process(frameEvent);
+            expect(tm1.currentIteration).to.eq(2);
+
+            frameEvent.time = 40;
+            system.process(frameEvent);
+            expect(tm1.currentIteration).to.eq(2);
+
+            frameEvent.time = 45;
+            system.process(frameEvent);
+            expect(tm1.currentIteration).to.eq(2);
+
+            frameEvent.time = 60;
+            system.process(frameEvent);
+            expect(tm1.currentIteration).to.eq(2);
+        });
     });
 
     describe("directedProgress", () => {
+        it("represent current iteration progress relative to the animationDirection", () => {
+            const tm1 = tmPool.create(1, true);
+            tm1.startTime = 10;
+            tm1.duration = 10;
+            tm1.iterations = 2;
+            tm1.playDirection = PlaybackDirection.reverse;
 
+            frameEvent.state = "running";
+            frameEvent.time = 14;
+            system.process(frameEvent);
+            expect(tm1.directedProgress).to.eq(0.6);
+
+            frameEvent.state = "running";
+            frameEvent.time = 10;
+            system.process(frameEvent);
+            expect(tm1.directedProgress).to.eq(1.0);
+
+        });
+        it("playDirection alternate", () => {
+            const tm1 = tmPool.create(1, true);
+            tm1.startTime = 10;
+            tm1.duration = 10;
+            tm1.iterations = 2;
+            tm1.playDirection = PlaybackDirection.alternate;
+
+            frameEvent.state = "running";
+            frameEvent.time = 14;
+            system.process(frameEvent);
+            expect(tm1.directedProgress).to.eq(0.4);
+
+            frameEvent.time = 20;
+            system.process(frameEvent);
+            expect(tm1.directedProgress).to.eq(1);
+
+            frameEvent.time = 22;
+            system.process(frameEvent);
+            expect(tm1.directedProgress).to.eq(0.8);
+
+            frameEvent.time = 30;
+            system.process(frameEvent);
+            expect(tm1.directedProgress).to.eq(0);
+        });
     });
-    describe("transformedProgress", () => {
+    describe.only("transformedProgress", () => {
+        it("transform progress === directedProgress if no easeing function or bezier are set", () => {
+            const tm1 = tmPool.create(1, true);
+            tm1.startTime = 10;
+            tm1.duration = 10;
+            tm1.iterations = 3;
+            tm1.playDirection = PlaybackDirection.alternate;
+            tm1.easingFunction = null;
+            tm1.bezier = null;
 
+            frameEvent.state = "running";
+            frameEvent.time = 10;
+            system.process(frameEvent);
+            expect(tm1.transformedProgress).to.eq(tm1.directedProgress);
+
+            frameEvent.time = 15;
+            system.process(frameEvent);
+            expect(tm1.transformedProgress).to.eq(tm1.directedProgress);
+
+            frameEvent.time = 20;
+            system.process(frameEvent);
+            expect(tm1.transformedProgress).to.eq(tm1.directedProgress);
+
+            frameEvent.time = 25;
+            system.process(frameEvent);
+            expect(tm1.transformedProgress).to.eq(tm1.directedProgress);
+
+            frameEvent.time = 45;
+            system.process(frameEvent);
+            expect(tm1.transformedProgress).to.eq(tm1.directedProgress);
+
+        });
+        it("should be able to use a bezier curve", () => {
+            const tm1 = tmPool.create(1, true);
+            tm1.startTime = 10;
+            tm1.duration = 10;
+            tm1.iterations = 3;
+            tm1.playDirection = PlaybackDirection.alternate;
+            tm1.easingFunction = null;
+            // bezier that equal linear transformation for ease of testing
+            tm1.bezier = { P1x: 0, P1y: 0, P2x: 1.0, P2y: 1.0 };
+
+            frameEvent.state = "running";
+            frameEvent.time = 10;
+            system.process(frameEvent);
+            expect(tm1.transformedProgress).to.eq(tm1.directedProgress);
+
+            frameEvent.time = 15;
+            system.process(frameEvent);
+            expect(tm1.transformedProgress).to.eq(tm1.directedProgress);
+
+            frameEvent.time = 20;
+            system.process(frameEvent);
+            expect(tm1.transformedProgress).to.eq(tm1.directedProgress);
+
+            frameEvent.time = 35;
+            system.process(frameEvent);
+            expect(tm1.transformedProgress).to.eq(tm1.directedProgress);
+        });
+        it("should be able to use a pre-made function by name", () => {
+            const tm1 = tmPool.create(1, true);
+            tm1.startTime = 10;
+            tm1.duration = 10;
+            tm1.iterations = 3;
+            tm1.playDirection = PlaybackDirection.alternate;
+            tm1.easingFunction = "linear";
+            tm1.bezier = null;
+
+            frameEvent.state = "running";
+            frameEvent.time = 10;
+            system.process(frameEvent);
+            expect(tm1.transformedProgress).to.eq(tm1.directedProgress);
+
+            frameEvent.time = 15;
+            system.process(frameEvent);
+            expect(tm1.transformedProgress).to.eq(tm1.directedProgress);
+
+            frameEvent.time = 20;
+            system.process(frameEvent);
+            expect(tm1.transformedProgress).to.eq(tm1.directedProgress);
+
+            frameEvent.time = 35;
+            system.process(frameEvent);
+            expect(tm1.transformedProgress).to.eq(tm1.directedProgress);
+        });
     });
 });
