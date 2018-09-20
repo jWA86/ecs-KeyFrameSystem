@@ -63,7 +63,6 @@ describe("TimeLine playstate", () => {
             const tm1 = tmPool.create(1, true);
             tm1.startTime = 10;
             tm1.duration = 10;
-            // tm1.time = 0;
 
             frameEvent.state = "running";
             frameEvent.time = 5;
