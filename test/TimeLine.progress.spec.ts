@@ -4,14 +4,14 @@ import "mocha";
 import { IEasingFunctions } from "../src/EasingFunctions";
 import { AnimationDirection, FillMode, ITimelineParams, PlaybackDirection, PlayState, TimelineSystem } from "../src/TimeLine";
 
-describe.only("TimeLine playstate", () => {
+describe("TimeLine playstate", () => {
     let system: TimelineSystem;
     const defaultTimeLineParams: ITimelineParams = {
         active: true,
         bezier: null,
         currentDirection: AnimationDirection.forwards,
         currentIteration: 0,
-        delta: 0,
+        // delta: 0,
         directedProgress: null,
         duration: 0,
         easingFunction: "linear" as keyof IEasingFunctions,
@@ -22,9 +22,9 @@ describe.only("TimeLine playstate", () => {
         iterationStart: 0,
         iterations: 1,
         playDirection: PlaybackDirection.normal,
-        playRate: 1,
-        progress: 0,
-        // startDelay: 0,
+        playRate: 1.0,
+        progress: null,
+        startDelay: 0,
         startTime: 0,
         state: PlayState.idle,
         time: null,
@@ -44,7 +44,7 @@ describe.only("TimeLine playstate", () => {
 
     beforeEach(() => {
         system = new TimelineSystem(defaultTimeLineParams);
-        tmPool = new ComponentFactory<ITimelineParams>(10, defaultTimeLineParams);
+        tmPool = new ComponentFactory<ITimelineParams>(10, Object.assign({}, defaultTimeLineParams));
 
         system.setParamSource("*", tmPool);
         system.validateParametersSources();
@@ -117,7 +117,7 @@ describe.only("TimeLine playstate", () => {
         describe("1 iteteration", () => {
             describe("should increment update the progression when in active phase", () => {
                 it("FillMode.forwards should keep progress to 1 after finished, and null before running", () => {
-                    const tm1 = tmPool.create(1, true);
+                    const tm1 = tmPool.create(2, true);
                     tm1.startTime = 10;
                     tm1.duration = 10;
                     tm1.fill = FillMode.forwards;
@@ -374,7 +374,7 @@ describe.only("TimeLine playstate", () => {
             expect(tm1.directedProgress).to.eq(0);
         });
     });
-    describe.only("transformedProgress", () => {
+    describe("transformedProgress", () => {
         it("transform progress === directedProgress if no easeing function or bezier are set", () => {
             const tm1 = tmPool.create(1, true);
             tm1.startTime = 10;

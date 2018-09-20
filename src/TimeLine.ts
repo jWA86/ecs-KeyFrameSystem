@@ -1,7 +1,8 @@
 import { interfaces, ParametersSourceIterator, System } from "ecs-framework";
 import * as bezier from "../node_modules/bezier-easing/dist/bezier-easing.js";
 import { easingFunctions, IEasingFunctions } from "./EasingFunctions";
-import { IBezierParams } from "./KeyFrameController";
+
+export interface IBezierParams { P1x: number; P1y: number; P2x: number; P2y: number; }
 
 export enum AnimationDirection {
     "forwards",
@@ -44,7 +45,7 @@ export enum PlayState {
 export interface ITimingOptions {
     duration: number;
     startTime: number; // relative to the parent timeline
-    // startDelay: number; // offset from the startTime, use to compute iterationStart (ie: skip part)
+    startDelay: number; // offset from the startTime, use to compute iterationStart (ie: skip part)
     iterationStart: number | null; // ie: 0.5 would start half way
     // endDelay: number; // offset from the end
     playRate: number;
@@ -61,7 +62,7 @@ export interface IParentTimeline extends interfaces.IComponent {
     playRate: number;
     currentDirection: AnimationDirection;
     state: PlayState;
-    delta: number;
+    // delta: number;
 }
 
 export interface ITimelineProgress extends interfaces.IComponent {
@@ -97,20 +98,20 @@ export class TimelineSystem extends System<ITimelineParams> {
     }
 
     public execute(params: ITimelineParams, parentTimeline: IParentTimeline): ITimelineParams {
-        const startDelay = 0;
+        // const startDelay = 0;
         const endDelay = 0;
         const localTime = this.computeLocalTime(parentTimeline.time, params.startTime, params.playRate);
         let currentDirection = parentTimeline.currentDirection;
         // const iterationDuration = params.startDelay + params.duration; // ?? iterationDuration === params.duration ?
         const iterationDuration = params.duration;
         const activeDuration = this.activeDuration(iterationDuration, params.iterations);
-        const endTime = this.endTime(startDelay, activeDuration, endDelay);
-        const beforeActiveBT = this.beforeActiveBoundaryTime(startDelay, endTime);
-        const activeAfterBT = this.activeAfterBoundaryTime(startDelay, activeDuration, endTime);
+        const endTime = this.endTime(params.startDelay, activeDuration, endDelay);
+        const beforeActiveBT = this.beforeActiveBoundaryTime(params.startDelay, endTime);
+        const activeAfterBT = this.activeAfterBoundaryTime(params.startDelay, activeDuration, endTime);
         const currentPhase = this.phase(localTime, currentDirection, beforeActiveBT, activeAfterBT);
 
         const playState = this.playState(parentTimeline.currentDirection, currentPhase, parentTimeline.state);
-        const activeTime = this.activeTime(currentPhase, localTime, startDelay, params.fill, activeDuration);
+        const activeTime = this.activeTime(currentPhase, localTime, params.startDelay, params.fill, activeDuration);
 
         const progress = this.overallProgress(currentPhase, activeTime, iterationDuration, params.iterations, params.iterationStart);
         const iterationProgress = this.iterationProgress(currentPhase, params.iterationStart, progress, activeTime, iterationDuration, params.iterations);
@@ -271,10 +272,6 @@ export class TimelineSystem extends System<ITimelineParams> {
     }
 
     public phase(localTime: number, animationDirection: AnimationDirection, beforeActiveBoundaryTime: number, activeAfterBoundaryTime: number): Phase {
-        // console.log(localTime);
-        // console.log("before: " + beforeActiveBoundaryTime);
-        // console.log("after: " + activeAfterBoundaryTime);
-        // before phase
         if (localTime < beforeActiveBoundaryTime) {
             return Phase.before;
         }
@@ -311,14 +308,14 @@ export class TimelineSystem extends System<ITimelineParams> {
             return {
                 active: true,
                 currentDirection: AnimationDirection.forwards,
-                delta: frameEvent.delta,
+                // delta: frameEvent.delta,
                 entityId: 0,
                 playRate: 1,
                 state: PlayState[frameEvent.state],
                 time: frameEvent.time,
             };
         } else {
-            return this._parentTimeLineParameterIterator.assembleParamters(this._parentTMId);
+            return this._parentTimeLineParameterIterator.assembleParameters(this._parentTMId);
         }
 
     }

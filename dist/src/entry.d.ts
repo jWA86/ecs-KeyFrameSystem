@@ -1,3 +1,3 @@
-import { IAnimationFrameEvent, IBezierParams, IKeyFrame, IKeyFrameController, KeyFrameControllerComponent, PlaybackState } from "../src/KeyFrameController";
-import { KeyFrameSystem } from "../src/KeyFrameSystem";
-export { PlaybackState, IAnimationFrameEvent, IBezierParams, IKeyFrame, IKeyFrameController, KeyFrameControllerComponent, KeyFrameSystem };
+import { AnimationDirection, FillMode, ITimelineParams, Phase, PlaybackDirection, PlayState, TimelineSystem } from "../src/TimeLine";
+import { easingFunctions, IEasingFunctions } from "./EasingFunctions";
+export { easingFunctions, IEasingFunctions, AnimationDirection, FillMode, ITimelineParams, Phase, PlaybackDirection, PlayState, TimelineSystem, };

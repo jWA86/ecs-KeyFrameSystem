@@ -80,38 +80,41 @@ return /******/ (function(modules) { // webpackBootstrap
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var PlaybackState;
-(function (PlaybackState) {
-    // First update flag to start
-    PlaybackState[PlaybackState["started"] = 0] = "started";
-    // Next will be in playing flag for the whole duration
-    PlaybackState[PlaybackState["playing"] = 1] = "playing";
-    // Ended once it reach the end of a timeline
-    PlaybackState[PlaybackState["ended"] = 2] = "ended";
-    // Next will be in stopped until it's start again
-    PlaybackState[PlaybackState["stopped"] = 3] = "stopped";
-    PlaybackState[PlaybackState["paused"] = 4] = "paused";
-})(PlaybackState || (PlaybackState = {}));
-exports.PlaybackState = PlaybackState;
-var KeyFrameControllerComponent = /** @class */ (function () {
-    function KeyFrameControllerComponent(entityId, active, from, duration, easingParams) {
-        if (easingParams === void 0) { easingParams = { P1x: 0.0, P1y: 0.0, P2x: 1.0, P2y: 1.0 }; }
-        this.entityId = entityId;
-        this.active = active;
-        this.from = from;
-        this.duration = duration;
-        this.easingParams = easingParams;
-        this.nbLoop = 1;
-        this.previousProgress = 0;
-        this.progress = 0;
-        this.playState = PlaybackState.stopped;
-        this.timer = { count: 0, delta: 0, loopCount: 0, reverse: false, time: 0 };
-        this.cycling = false;
-        this.fadeLoop = false;
-    }
-    return KeyFrameControllerComponent;
-}());
-exports.KeyFrameControllerComponent = KeyFrameControllerComponent;
+/*
+ * Easing Functions - inspired from http://gizma.com/easing/
+ * only considering the t value for the range [0, 1] => [0, 1]
+ */
+// tslint:disable:object-literal-sort-keys
+var easingFunctions = {
+    // no easing, no acceleration
+    linear: function (t) { return t; },
+    // accelerating from zero velocity
+    easeInQuad: function (t) { return t * t; },
+    // decelerating to zero velocity
+    easeOutQuad: function (t) { return t * (2 - t); },
+    // acceleration until halfway, then deceleration
+    easeInOutQuad: function (t) { return (t < 0.5) ? 2 * t * t : -1 + (4 - 2 * t) * t; },
+    // accelerating from zero velocity
+    easeInCubic: function (t) { return t * t * t; },
+    // decelerating to zero velocity
+    easeOutCubic: function (t) { return (--t) * t * t + 1; },
+    // acceleration until halfway, then deceleration
+    easeInOutCubic: function (t) { return t < .5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1; },
+    // accelerating from zero velocity
+    easeInQuart: function (t) { return t * t * t * t; },
+    // decelerating to zero velocity
+    easeOutQuart: function (t) { return 1 - (--t) * t * t * t; },
+    // acceleration until halfway, then deceleration
+    easeInOutQuart: function (t) { return t < .5 ? 8 * t * t * t * t : 1 - 8 * (--t) * t * t * t; },
+    // accelerating from zero velocity
+    easeInQuint: function (t) { return t * t * t * t * t; },
+    // decelerating to zero velocity
+    easeOutQuint: function (t) { return 1 + (--t) * t * t * t * t; },
+    // acceleration until halfway, then deceleration
+    easeInOutQuint: function (t) { return t < .5 ? 16 * t * t * t * t * t : 1 + 16 * (--t) * t * t * t * t; },
+};
+exports.easingFunctions = easingFunctions;
+// tslint:enable:object-literal-sort-keys
 
 
 /***/ }),
@@ -128,11 +131,15 @@ module.exports = __webpack_require__(2);
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var KeyFrameController_1 = __webpack_require__(0);
-exports.KeyFrameControllerComponent = KeyFrameController_1.KeyFrameControllerComponent;
-exports.PlaybackState = KeyFrameController_1.PlaybackState;
-var KeyFrameSystem_1 = __webpack_require__(3);
-exports.KeyFrameSystem = KeyFrameSystem_1.KeyFrameSystem;
+var TimeLine_1 = __webpack_require__(3);
+exports.AnimationDirection = TimeLine_1.AnimationDirection;
+exports.FillMode = TimeLine_1.FillMode;
+exports.Phase = TimeLine_1.Phase;
+exports.PlaybackDirection = TimeLine_1.PlaybackDirection;
+exports.PlayState = TimeLine_1.PlayState;
+exports.TimelineSystem = TimeLine_1.TimelineSystem;
+var EasingFunctions_1 = __webpack_require__(0);
+exports.easingFunctions = EasingFunctions_1.easingFunctions;
 
 
 /***/ }),
@@ -154,124 +161,291 @@ var __extends = (this && this.__extends) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 var ecs_framework_1 = __webpack_require__(4);
 var bezier = __webpack_require__(5);
-var KeyFrameController_1 = __webpack_require__(0);
-var defaultKeyFrameParam = {
-    cycling: false,
-    duration: 0,
-    easingParams: { P1x: 0.0, P1y: 0.0, P2x: 1.0, P2y: 1.0 },
-    fadeLoop: false,
-    from: 0,
-    nbLoop: 0,
-    playState: KeyFrameController_1.PlaybackState.stopped,
-    previousProgress: 0,
-    progress: 0,
-    timer: { count: 0, delta: 0, loopCount: 0, reverse: false, time: 0 },
-};
-var KeyFrameSystem = /** @class */ (function (_super) {
-    __extends(KeyFrameSystem, _super);
-    function KeyFrameSystem() {
-        var _this = _super.call(this) || this;
-        _this._defaultParameter = defaultKeyFrameParam;
+var EasingFunctions_1 = __webpack_require__(0);
+var AnimationDirection;
+(function (AnimationDirection) {
+    AnimationDirection[AnimationDirection["forwards"] = 0] = "forwards";
+    AnimationDirection[AnimationDirection["reverse"] = 1] = "reverse";
+})(AnimationDirection = exports.AnimationDirection || (exports.AnimationDirection = {}));
+var Composite;
+(function (Composite) {
+    Composite[Composite["replace"] = 0] = "replace";
+    Composite[Composite["add"] = 1] = "add";
+    Composite[Composite["accumulate"] = 2] = "accumulate";
+})(Composite = exports.Composite || (exports.Composite = {}));
+var PlaybackDirection;
+(function (PlaybackDirection) {
+    PlaybackDirection[PlaybackDirection["normal"] = 0] = "normal";
+    PlaybackDirection[PlaybackDirection["reverse"] = 1] = "reverse";
+    PlaybackDirection[PlaybackDirection["alternate"] = 2] = "alternate";
+    PlaybackDirection[PlaybackDirection["alternateReverse"] = 3] = "alternateReverse";
+})(PlaybackDirection = exports.PlaybackDirection || (exports.PlaybackDirection = {}));
+var Phase;
+(function (Phase) {
+    Phase[Phase["before"] = 0] = "before";
+    Phase[Phase["active"] = 1] = "active";
+    Phase[Phase["after"] = 2] = "after";
+})(Phase = exports.Phase || (exports.Phase = {}));
+var FillMode;
+(function (FillMode) {
+    FillMode[FillMode["none"] = 0] = "none";
+    FillMode[FillMode["forwards"] = 1] = "forwards";
+    FillMode[FillMode["backwards"] = 2] = "backwards";
+    FillMode[FillMode["both"] = 3] = "both";
+})(FillMode = exports.FillMode || (exports.FillMode = {}));
+var PlayState;
+(function (PlayState) {
+    PlayState[PlayState["idle"] = 0] = "idle";
+    PlayState[PlayState["running"] = 1] = "running";
+    PlayState[PlayState["paused"] = 2] = "paused";
+    PlayState[PlayState["finished"] = 3] = "finished";
+})(PlayState = exports.PlayState || (exports.PlayState = {}));
+var TimelineSystem = /** @class */ (function (_super) {
+    __extends(TimelineSystem, _super);
+    function TimelineSystem(defaultParameter, _parentTMId, _parentTimeLineParameterIterator) {
+        var _this = _super.call(this, defaultParameter) || this;
+        _this._parentTMId = _parentTMId;
+        _this._parentTimeLineParameterIterator = _parentTimeLineParameterIterator;
+        _parentTimeLineParameterIterator === undefined ? _this._isTMFrameEvent = true : _this._isTMFrameEvent = false;
         return _this;
     }
-    KeyFrameSystem.prototype.execute = function (params, timeRef) {
-        // if paused don't update
-        if (params.playState[this._k.playState] === KeyFrameController_1.PlaybackState.paused) {
-            return;
+    TimelineSystem.prototype.process = function (frameEvent) {
+        var args = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            args[_i - 1] = arguments[_i];
         }
-        var loopEnded = params.timer[this._k.timer].loopCount >= params.nbLoop[this._k.nbLoop] && params.nbLoop[this._k.nbLoop] !== 0;
-        // if loopCount reached end but not yet set to stopped
-        if (loopEnded && params.playState[this._k.playState] === KeyFrameController_1.PlaybackState.ended) {
-            params.playState[this._k.playState] = KeyFrameController_1.PlaybackState.stopped;
-            params.timer[this._k.timer].count += 1;
-            return;
+        var state = this.getParentTimelineState(frameEvent);
+        this._previousParentTmState = this._previousParentTmState || state;
+        // only run if previous state of parent timeline was running, so that we can set children time line to finished or paused if the parent is, otherwise don't bother updating children time line.
+        if (this._previousParentTmState === PlayState.running) {
+            this._previousParentTmState = state;
+            var parentTM = this.getParentTimeLine(frameEvent);
+            _super.prototype.process.apply(this, [parentTM].concat(args));
         }
-        // relative time
-        var rFrom = params.from[this._k.from] * (params.timer[this._k.timer].loopCount + 1);
-        var rEnd = params.from[this._k.from] + params.duration[this._k.duration] * (params.timer[this._k.timer].loopCount + 1);
-        // start
-        if ((params.playState[this._k.playState] === KeyFrameController_1.PlaybackState.stopped)
-            && timeRef.time >= rFrom && timeRef.time <= rEnd && !loopEnded) {
-            params.playState[this._k.playState] = KeyFrameController_1.PlaybackState.started;
-            params.timer[this._k.timer].count += 1;
-            // when we start directly in reverse
-            if (params.timer[this._k.timer].reverse) {
-                params.timer[this._k.timer].time = params.duration[this._k.duration];
-            }
-            return;
-        }
-        else if ((params.playState[this._k.playState] === KeyFrameController_1.PlaybackState.started || params.playState[this._k.playState] === KeyFrameController_1.PlaybackState.playing)
-            && timeRef.time >= rFrom
-            && timeRef.time <= rEnd
-            && !loopEnded) {
-            // playing
-            params.playState[this._k.playState] = KeyFrameController_1.PlaybackState.playing;
-            if (!params.timer[this._k.timer].reverse) {
-                params.timer[this._k.timer].time += timeRef.delta;
-            }
-            else {
-                params.timer[this._k.timer].time -= timeRef.delta;
-            }
-            params.timer[this._k.timer].delta = timeRef.delta;
-            params.timer[this._k.timer].count += 1;
-            var b = bezier(params.easingParams[this._k.easingParams].P1x, params.easingParams[this._k.easingParams].P1y, params.easingParams[this._k.easingParams].P2x, params.easingParams[this._k.easingParams].P2y);
-            params.previousProgress[this._k.previousProgress] = params.progress[this._k.progress];
-            params.progress[this._k.progress] = b(params.timer[this._k.timer].time / params.duration[this._k.duration]);
-            return;
-        }
-        else if ((params.playState[this._k.playState] === KeyFrameController_1.PlaybackState.started || params.playState[this._k.playState] === KeyFrameController_1.PlaybackState.playing)
-            && timeRef.time >= rFrom
-            && timeRef.time > rEnd
-            && !loopEnded) {
-            // ending
-            // when looping playState is set to ended only when all loop have completed otherwise it will set back to started
-            //
-            // a keyframe can be started and ended without being played if it duration is 1 for exemple
-            // usefull for keyframe that trigger event but have no animation
-            params.playState[this._k.playState] = KeyFrameController_1.PlaybackState.ended;
-            params.timer[this._k.timer].loopCount += 1;
-            params.timer[this._k.timer].count += 1;
-            this.changeDirection(params, timeRef);
-            return;
-        }
+        this._previousParentTmState = state;
     };
-    KeyFrameSystem.prototype.changeDirection = function (params, timeRef) {
-        if (params.timer[this._k.timer].loopCount >= params.nbLoop[this._k.nbLoop] && params.nbLoop[this._k.nbLoop] !== 0) {
-            return;
+    TimelineSystem.prototype.execute = function (params, parentTimeline) {
+        // const startDelay = 0;
+        var endDelay = 0;
+        var localTime = this.computeLocalTime(parentTimeline.time, params.startTime, params.playRate);
+        var currentDirection = parentTimeline.currentDirection;
+        // const iterationDuration = params.startDelay + params.duration; // ?? iterationDuration === params.duration ?
+        var iterationDuration = params.duration;
+        var activeDuration = this.activeDuration(iterationDuration, params.iterations);
+        var endTime = this.endTime(params.startDelay, activeDuration, endDelay);
+        var beforeActiveBT = this.beforeActiveBoundaryTime(params.startDelay, endTime);
+        var activeAfterBT = this.activeAfterBoundaryTime(params.startDelay, activeDuration, endTime);
+        var currentPhase = this.phase(localTime, currentDirection, beforeActiveBT, activeAfterBT);
+        var playState = this.playState(parentTimeline.currentDirection, currentPhase, parentTimeline.state);
+        var activeTime = this.activeTime(currentPhase, localTime, params.startDelay, params.fill, activeDuration);
+        var progress = this.overallProgress(currentPhase, activeTime, iterationDuration, params.iterations, params.iterationStart);
+        var iterationProgress = this.iterationProgress(currentPhase, params.iterationStart, progress, activeTime, iterationDuration, params.iterations);
+        var currentIteration = this.currentIteration(currentPhase, activeTime, progress, params.iterations, iterationProgress);
+        currentDirection = this.currentDirection(params.playDirection, currentIteration);
+        var directedProgress = this.directedProgress(iterationProgress, currentDirection);
+        var transformedProgress;
+        if (params.easingFunction !== null) {
+            transformedProgress = this.transformedProgressEasingFunc(directedProgress, params.easingFunction);
         }
-        // looping back from start
-        if (!params.cycling[this._k.cycling]) {
-            if (params.fadeLoop[this._k.fadeLoop]) {
-                var delta = params.duration[this._k.duration] - params.timer[this._k.timer].time;
-                var toStartDelta = timeRef.delta - delta;
-                params.timer[this._k.timer].time = toStartDelta;
+        else if (params.bezier !== null) {
+            transformedProgress = this.transformedProgressBezier(directedProgress, params.bezier);
+        }
+        else {
+            transformedProgress = this.transformedProgressEasingFunc(directedProgress, "linear");
+        }
+        params.progress = progress;
+        params.iterationProgress = iterationProgress;
+        params.currentIteration = currentIteration;
+        params.directedProgress = directedProgress;
+        params.currentDirection = currentDirection;
+        params.transformedProgress = transformedProgress;
+        params.state = playState;
+        params.time = localTime;
+        return params;
+    };
+    TimelineSystem.prototype.overallProgress = function (phase, activeTime, iterationDuration, iterationCount, iterationStart) {
+        if (isNaN(activeTime)) {
+            return null;
+        }
+        var progress = 0;
+        if (iterationDuration === 0) {
+            if (phase === Phase.before) {
+                progress = 0;
             }
             else {
-                params.timer[this._k.timer].time = 0;
+                progress = iterationCount;
             }
         }
         else {
-            // cycling
-            params.timer[this._k.timer].reverse = !params.timer[this._k.timer].reverse;
-            if (params.fadeLoop[this._k.fadeLoop]) {
+            progress = activeTime / iterationDuration;
+        }
+        return progress + iterationStart;
+    };
+    /** The simple iteration progress is a fraction of the progress through the current iteration that ignores transformations to the time introduced by the playback direction or timing functions applied to the effect, and is calculated as follows:
+     */
+    TimelineSystem.prototype.iterationProgress = function (currentPhase, iterationStart, overallProgress, activeTime, iterationDuration, iterationCount) {
+        var iterationProgress = 0;
+        if (overallProgress === null) {
+            iterationProgress = null;
+        }
+        else if (!isFinite(overallProgress)) {
+            iterationProgress = iterationStart % 1.0;
+        }
+        else {
+            iterationProgress = overallProgress % 1.0;
+        }
+        if (iterationProgress === 0 && currentPhase === Phase.after && iterationCount !== 0 && (activeTime !== 0 || iterationDuration === 0)) {
+            iterationProgress = 1.0;
+        }
+        return iterationProgress;
+    };
+    TimelineSystem.prototype.currentIteration = function (currentPhase, activeTime, overallProgress, iterationCount, iterationProgress) {
+        if (isNaN(activeTime)) {
+            return null;
+        }
+        if (currentPhase === Phase.after && !isFinite(iterationCount)) {
+            return Infinity;
+        }
+        else if (iterationProgress === 1.0) {
+            return Math.floor(overallProgress) - 1;
+        }
+        else {
+            return Math.floor(overallProgress);
+        }
+    };
+    TimelineSystem.prototype.directedProgress = function (iterationProgress, currentDirection) {
+        if (iterationProgress === null) {
+            return null;
+        }
+        if (currentDirection === AnimationDirection.forwards) {
+            return iterationProgress;
+        }
+        else {
+            return 1.0 - iterationProgress;
+        }
+    };
+    TimelineSystem.prototype.currentDirection = function (playBackDirection, currentIteration) {
+        if (playBackDirection === PlaybackDirection.normal) {
+            return AnimationDirection.forwards;
+        }
+        else if (playBackDirection === PlaybackDirection.reverse) {
+            return AnimationDirection.reverse;
+        }
+        else {
+            var d = currentIteration;
+            if (playBackDirection === PlaybackDirection.alternateReverse) {
+                d += 1;
+            }
+            if (d % 2 === 0) {
+                return AnimationDirection.forwards;
             }
             else {
-                if (params.timer[this._k.timer].reverse) {
-                    params.timer[this._k.timer].time = params.duration[this._k.duration];
-                }
-                else {
-                    params.timer[this._k.timer].time = 0;
-                }
+                return isFinite(d) ? AnimationDirection.reverse : AnimationDirection.forwards;
             }
         }
-        var b = bezier(params.easingParams[this._k.easingParams].P1x, params.easingParams[this._k.easingParams].P1y, params.easingParams[this._k.easingParams].P2x, params.easingParams[this._k.easingParams].P2y);
-        params.previousProgress[this._k.previousProgress] = params.progress[this._k.progress];
-        params.progress[this._k.progress] = b(params.timer[this._k.timer].time / params.duration[this._k.duration]);
-        params.playState[this._k.playState] = KeyFrameController_1.PlaybackState.started;
     };
-    return KeyFrameSystem;
+    TimelineSystem.prototype.transformedProgressBezier = function (directedProgress, bezierparams) {
+        if (directedProgress === null) {
+            return null;
+        }
+        return bezier(bezierparams.P1x, bezierparams.P1y, bezierparams.P2x, bezierparams.P2y)(directedProgress);
+    };
+    TimelineSystem.prototype.transformedProgressEasingFunc = function (directedProgress, easing) {
+        if (directedProgress === null) {
+            return null;
+        }
+        return EasingFunctions_1.easingFunctions[easing](directedProgress);
+    };
+    // 3.9.3.1. Calculating the active time
+    TimelineSystem.prototype.activeTime = function (phase, localTime, startDelay, fill, activeDuration) {
+        switch (phase) {
+            case Phase.before:
+                if (fill === FillMode.backwards || fill === FillMode.both) {
+                    return Math.max(localTime - startDelay, 0);
+                }
+                break;
+            case Phase.active:
+                return localTime - startDelay;
+            case Phase.after:
+                if (fill === FillMode.forwards || fill === FillMode.both) {
+                    return Math.max(Math.min(localTime - startDelay, activeDuration), 0);
+                }
+                break;
+            default:
+                break;
+        }
+    };
+    /** Time relative to startTime */
+    TimelineSystem.prototype.computeLocalTime = function (timeLineTime, startTime, playBackRate) {
+        return (timeLineTime - startTime) * playBackRate;
+    };
+    TimelineSystem.prototype.activeDuration = function (iterationDuration, iterationCount) {
+        return iterationDuration * iterationCount || 0;
+    };
+    TimelineSystem.prototype.endTime = function (startDelay, activeDuration, endDelay) {
+        return Math.max(startDelay + activeDuration + endDelay, 0);
+    };
+    TimelineSystem.prototype.animationDirection = function (playBackRate) {
+        return playBackRate < 0 ? AnimationDirection.reverse : AnimationDirection.forwards;
+    };
+    TimelineSystem.prototype.beforeActiveBoundaryTime = function (startDelay, endTime) {
+        return Math.max(Math.min(startDelay, endTime), 0);
+    };
+    TimelineSystem.prototype.activeAfterBoundaryTime = function (startDelay, activeDuration, endTime) {
+        return Math.max(Math.min(startDelay + activeDuration, endTime), 0);
+    };
+    TimelineSystem.prototype.phase = function (localTime, animationDirection, beforeActiveBoundaryTime, activeAfterBoundaryTime) {
+        if (localTime < beforeActiveBoundaryTime) {
+            return Phase.before;
+        }
+        if (animationDirection === AnimationDirection.reverse && localTime === beforeActiveBoundaryTime) {
+            return Phase.before;
+        }
+        // after phase
+        if (localTime > activeAfterBoundaryTime) {
+            return Phase.after;
+        }
+        if (animationDirection === AnimationDirection.forwards && localTime === activeAfterBoundaryTime) {
+            return Phase.after;
+        }
+        // active phases
+        return Phase.active;
+    };
+    TimelineSystem.prototype.playState = function (animationDirection, phase, parentState) {
+        if (parentState === PlayState.paused || parentState === PlayState.finished || parentState === PlayState.idle) {
+            return parentState;
+        }
+        switch (phase) {
+            case Phase.active:
+                return PlayState.running;
+            case Phase.after:
+                return PlayState.finished;
+            case Phase.before:
+                return animationDirection === AnimationDirection.forwards ? PlayState.idle : PlayState.finished;
+        }
+    };
+    TimelineSystem.prototype.getParentTimeLine = function (frameEvent) {
+        if (this._isTMFrameEvent === true) {
+            return {
+                active: true,
+                currentDirection: AnimationDirection.forwards,
+                // delta: frameEvent.delta,
+                entityId: 0,
+                playRate: 1,
+                state: PlayState[frameEvent.state],
+                time: frameEvent.time,
+            };
+        }
+        else {
+            return this._parentTimeLineParameterIterator.assembleParameters(this._parentTMId);
+        }
+    };
+    TimelineSystem.prototype.getParentTimelineState = function (frameEvent) {
+        return this._isTMFrameEvent === true ? PlayState[frameEvent.state] : this._parentTimeLineParameterIterator.getParameterValue(this._parentTMId, "state");
+    };
+    return TimelineSystem;
 }(ecs_framework_1.System));
-exports.KeyFrameSystem = KeyFrameSystem;
+exports.TimelineSystem = TimelineSystem;
 
 
 /***/ }),
