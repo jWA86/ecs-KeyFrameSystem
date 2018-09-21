@@ -133,6 +133,7 @@ module.exports = __webpack_require__(2);
 Object.defineProperty(exports, "__esModule", { value: true });
 var TimeLine_1 = __webpack_require__(3);
 exports.AnimationDirection = TimeLine_1.AnimationDirection;
+exports.Composite = TimeLine_1.Composite;
 exports.FillMode = TimeLine_1.FillMode;
 exports.Phase = TimeLine_1.Phase;
 exports.PlaybackDirection = TimeLine_1.PlaybackDirection;
