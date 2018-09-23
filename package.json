@@ -42,6 +42,6 @@
   },
   "dependencies": {
     "bezier-easing": "^2.0.3",
-    "ecs-framework": "^12.4.3-pre-alpha"
+    "ecs-framework": "^12.4.5-pre-alpha"
   }
 }
