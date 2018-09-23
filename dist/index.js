@@ -197,9 +197,11 @@ var FillMode;
 var PlayState;
 (function (PlayState) {
     PlayState[PlayState["idle"] = 0] = "idle";
-    PlayState[PlayState["running"] = 1] = "running";
-    PlayState[PlayState["paused"] = 2] = "paused";
-    PlayState[PlayState["finished"] = 3] = "finished";
+    PlayState[PlayState["started"] = 1] = "started";
+    PlayState[PlayState["running"] = 2] = "running";
+    PlayState[PlayState["paused"] = 3] = "paused";
+    PlayState[PlayState["justFinished"] = 4] = "justFinished";
+    PlayState[PlayState["finished"] = 5] = "finished";
 })(PlayState = exports.PlayState || (exports.PlayState = {}));
 var TimelineSystem = /** @class */ (function (_super) {
     __extends(TimelineSystem, _super);
@@ -237,7 +239,7 @@ var TimelineSystem = /** @class */ (function (_super) {
         var beforeActiveBT = this.beforeActiveBoundaryTime(params.startDelay, endTime);
         var activeAfterBT = this.activeAfterBoundaryTime(params.startDelay, activeDuration, endTime);
         var currentPhase = this.phase(localTime, currentDirection, beforeActiveBT, activeAfterBT);
-        var playState = this.playState(parentTimeline.currentDirection, currentPhase, parentTimeline.state);
+        var playState = this.playState(parentTimeline.currentDirection, currentPhase, params.state, parentTimeline.state);
         var activeTime = this.activeTime(currentPhase, localTime, params.startDelay, params.fill, activeDuration);
         var progress = this.overallProgress(currentPhase, activeTime, iterationDuration, params.iterations, params.iterationStart);
         var iterationProgress = this.iterationProgress(currentPhase, params.iterationStart, progress, activeTime, iterationDuration, params.iterations);
@@ -412,17 +414,17 @@ var TimelineSystem = /** @class */ (function (_super) {
         // active phases
         return Phase.active;
     };
-    TimelineSystem.prototype.playState = function (animationDirection, phase, parentState) {
+    TimelineSystem.prototype.playState = function (animationDirection, phase, previousState, parentState) {
         if (parentState === PlayState.paused || parentState === PlayState.finished || parentState === PlayState.idle) {
             return parentState;
         }
         switch (phase) {
             case Phase.active:
-                return PlayState.running;
+                return previousState === PlayState.idle ? PlayState.started : PlayState.running;
             case Phase.after:
-                return PlayState.finished;
+                return previousState === PlayState.justFinished ? PlayState.finished : PlayState.justFinished;
             case Phase.before:
-                return animationDirection === AnimationDirection.forwards ? PlayState.idle : PlayState.finished;
+                return animationDirection === AnimationDirection.forwards ? PlayState.idle : (previousState === PlayState.running) ? PlayState.justFinished : PlayState.finished;
         }
     };
     TimelineSystem.prototype.getParentTimeLine = function (frameEvent) {

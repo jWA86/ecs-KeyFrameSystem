@@ -34,9 +34,11 @@ export declare enum FillMode {
 }
 export declare enum PlayState {
     idle = 0,
-    running = 1,
-    paused = 2,
-    finished = 3
+    started = 1,
+    running = 2,
+    paused = 3,
+    justFinished = 4,
+    finished = 5
 }
 export interface ITimingOptions {
     duration: number;
@@ -91,7 +93,7 @@ export declare class TimelineSystem extends System<ITimelineParams> {
     beforeActiveBoundaryTime(startDelay: number, endTime: number): number;
     activeAfterBoundaryTime(startDelay: number, activeDuration: number, endTime: number): number;
     phase(localTime: number, animationDirection: AnimationDirection, beforeActiveBoundaryTime: number, activeAfterBoundaryTime: number): Phase;
-    playState(animationDirection: AnimationDirection, phase: Phase, parentState: PlayState): PlayState;
+    playState(animationDirection: AnimationDirection, phase: Phase, previousState: PlayState, parentState: PlayState): PlayState;
     protected getParentTimeLine(frameEvent: interfaces.IFrameEvent): IParentTimeline;
     protected getParentTimelineState(frameEvent: interfaces.IFrameEvent): PlayState;
 }
