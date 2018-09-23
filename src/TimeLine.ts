@@ -37,8 +37,10 @@ export enum FillMode {
 
 export enum PlayState {
     idle, // not yet started
+    started, // first update of progress
     running, // active time
     paused,
+    justFinished, // last update of progress
     finished, // finished all iterations
 }
 
@@ -110,7 +112,7 @@ export class TimelineSystem extends System<ITimelineParams> {
         const activeAfterBT = this.activeAfterBoundaryTime(params.startDelay, activeDuration, endTime);
         const currentPhase = this.phase(localTime, currentDirection, beforeActiveBT, activeAfterBT);
 
-        const playState = this.playState(parentTimeline.currentDirection, currentPhase, parentTimeline.state);
+        const playState = this.playState(parentTimeline.currentDirection, currentPhase, params.state, parentTimeline.state);
         const activeTime = this.activeTime(currentPhase, localTime, params.startDelay, params.fill, activeDuration);
 
         const progress = this.overallProgress(currentPhase, activeTime, iterationDuration, params.iterations, params.iterationStart);
@@ -289,17 +291,17 @@ export class TimelineSystem extends System<ITimelineParams> {
         return Phase.active;
     }
 
-    public playState(animationDirection: AnimationDirection, phase: Phase, parentState: PlayState): PlayState {
+    public playState(animationDirection: AnimationDirection, phase: Phase, previousState: PlayState, parentState: PlayState): PlayState {
         if (parentState === PlayState.paused || parentState === PlayState.finished || parentState === PlayState.idle) {
             return parentState;
         }
         switch (phase) {
             case Phase.active:
-                return PlayState.running;
+                return previousState === PlayState.idle ? PlayState.started : PlayState.running;
             case Phase.after:
-                return PlayState.finished;
+                return previousState === PlayState.justFinished ?  PlayState.finished : PlayState.justFinished;
             case Phase.before:
-                return animationDirection === AnimationDirection.forwards ? PlayState.idle : PlayState.finished;
+                return animationDirection === AnimationDirection.forwards ? PlayState.idle : (previousState === PlayState.running) ? PlayState.justFinished : PlayState.finished;
         }
     }
 
