@@ -86,11 +86,35 @@ export interface ITimelineParams extends IParentTimeline, ITimingOptions, ITimel
 
 }
 
+export const defaultParameters: ITimelineParams = {
+    active: true,
+    bezier: null,
+    currentDirection: null,
+    currentIteration: 0,
+    directedProgress: null,
+    duration: 0,
+    easingFunction: "linear" as keyof IEasingFunctions,
+    // endDelay: 0,
+    entityId: 0,
+    fill: FillMode.both,
+    iterationProgress: 0,
+    iterationStart: 0,
+    iterations: Infinity,
+    playDirection: PlaybackDirection.normal,
+    playRate: 1,
+    progress: null,
+    startDelay: 0,
+    startTime: 0,
+    state: PlayState.idle,
+    time: null,
+    transformedProgress: null,
+};
+
 export class TimelineSystem extends System<ITimelineParams> {
     protected _isTMFrameEvent: boolean;
     protected _previousParentTmState: PlayState;
-    constructor(defaultParameter: ITimelineParams, protected _parentTMId?: number, protected _parentTimeLineParameterIterator?: ParametersSourceIterator<IParentTimeline>) {
-        super(defaultParameter);
+    constructor(protected _parentTMId?: number, protected _parentTimeLineParameterIterator?: ParametersSourceIterator<IParentTimeline>) {
+        super(defaultParameters);
         _parentTimeLineParameterIterator === undefined ? this._isTMFrameEvent = true : this._isTMFrameEvent = false;
     }
 

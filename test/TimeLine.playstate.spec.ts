@@ -43,7 +43,7 @@ describe("TimeLine playstate", () => {
     let tmPool: ComponentFactory<ITimelineParams>;
 
     beforeEach(() => {
-        system = new TimelineSystem(defaultTimeLineParams);
+        system = new TimelineSystem();
         tmPool = new ComponentFactory<ITimelineParams>(10, defaultTimeLineParams);
 
         system.setParamSource("*", tmPool);

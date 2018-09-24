@@ -27,7 +27,7 @@ describe("Timeline Phase", () => {
         startDelay: 0,
         startTime: 0,
         state: PlayState.idle,
-        time: 0,
+        time: null,
         transformedProgress: null,
     };
 
@@ -41,7 +41,7 @@ describe("Timeline Phase", () => {
     };
 
     beforeEach(() => {
-        system = new TimelineSystem(defaultTimeLineParams);
+        system = new TimelineSystem();
     });
     describe("time boundaries", () => {
 
