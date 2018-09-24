@@ -47,7 +47,7 @@ export declare enum PlayState {
     finished = 5
 }
 export interface ITimingOptions {
-    duration: number;
+    iterationDuration: number;
     startTime: number;
     startDelay: number;
     iterationStart: number | null;
@@ -63,6 +63,8 @@ export interface IParentTimeline extends interfaces.IComponent {
     playRate: number;
     currentDirection: PlayDirection;
     state: PlayState;
+    currentIteration: number;
+    iterationDuration: number;
 }
 export interface ITimelineProgress extends interfaces.IComponent {
     progress: number;

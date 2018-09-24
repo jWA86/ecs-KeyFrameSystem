@@ -216,11 +216,11 @@ exports.defaultParameters = {
     currentDirection: null,
     currentIteration: 0,
     directedProgress: null,
-    duration: 0,
     easingFunction: "linear",
     // endDelay: 0,
     entityId: 0,
     fill: FillMode.both,
+    iterationDuration: Infinity,
     iterationProgress: 0,
     iterationStart: 0,
     iterations: Infinity,
@@ -261,10 +261,11 @@ var TimelineSystem = /** @class */ (function (_super) {
         // const startDelay = 0;
         // console.log("bp");
         var endDelay = 0;
-        var localTime = this.computeLocalTime(parentTimeline.time, params.startTime, params.playRate);
+        // const localTime = this.computeLocalTime(parentTimeline.time, params.startTime, params.playRate);
+        var localTime = ((parentTimeline.time - params.startTime) * params.playRate) - (parentTimeline.currentIteration * parentTimeline.iterationDuration * params.playRate || 0);
         // const currentDirection = this.currentDirection(params.playDirection, params.currentIteration);
         var animationDirection = this.animationDirection(params.playRate);
-        var iterationDuration = params.duration;
+        var iterationDuration = params.iterationDuration;
         var activeDuration = this.activeDuration(iterationDuration, params.iterations);
         var endTime = this.endTime(params.startDelay, activeDuration, endDelay);
         var beforeActiveBT = this.beforeActiveBoundaryTime(params.startDelay, endTime);
@@ -464,8 +465,10 @@ var TimelineSystem = /** @class */ (function (_super) {
             return {
                 active: true,
                 currentDirection: PlayDirection.forwards,
+                currentIteration: 0,
                 // delta: frameEvent.delta,
                 entityId: 0,
+                iterationDuration: Infinity,
                 playRate: 1,
                 state: PlayState[frameEvent.state],
                 time: frameEvent.time,
