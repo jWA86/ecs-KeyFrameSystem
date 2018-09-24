@@ -165,9 +165,16 @@ var bezier = __webpack_require__(5);
 var EasingFunctions_1 = __webpack_require__(0);
 var AnimationDirection;
 (function (AnimationDirection) {
+    /** When playrate >= 0 */
     AnimationDirection[AnimationDirection["forwards"] = 0] = "forwards";
-    AnimationDirection[AnimationDirection["reverse"] = 1] = "reverse";
+    /** When playrate < 0 */
+    AnimationDirection[AnimationDirection["backwards"] = 1] = "backwards";
 })(AnimationDirection = exports.AnimationDirection || (exports.AnimationDirection = {}));
+var PlayDirection;
+(function (PlayDirection) {
+    PlayDirection[PlayDirection["forwards"] = 0] = "forwards";
+    PlayDirection[PlayDirection["reverse"] = 1] = "reverse";
+})(PlayDirection = exports.PlayDirection || (exports.PlayDirection = {}));
 var Composite;
 (function (Composite) {
     Composite[Composite["replace"] = 0] = "replace";
@@ -220,8 +227,8 @@ var TimelineSystem = /** @class */ (function (_super) {
         var state = this.getParentTimelineState(frameEvent);
         this._previousParentTmState = this._previousParentTmState || state;
         // only run if previous state of parent timeline was running, so that we can set children time line to finished or paused if the parent is, otherwise don't bother updating children time line.
-        if (this._previousParentTmState === PlayState.running) {
-            this._previousParentTmState = state;
+        if (this._previousParentTmState !== PlayState.idle && this._previousParentTmState !== PlayState.finished && this._previousParentTmState !== PlayState.paused) {
+            // this._previousParentTmState = state;
             var parentTM = this.getParentTimeLine(frameEvent);
             _super.prototype.process.apply(this, [parentTM].concat(args));
         }
@@ -229,22 +236,23 @@ var TimelineSystem = /** @class */ (function (_super) {
     };
     TimelineSystem.prototype.execute = function (params, parentTimeline) {
         // const startDelay = 0;
+        // console.log("bp");
         var endDelay = 0;
         var localTime = this.computeLocalTime(parentTimeline.time, params.startTime, params.playRate);
-        var currentDirection = parentTimeline.currentDirection;
-        // const iterationDuration = params.startDelay + params.duration; // ?? iterationDuration === params.duration ?
+        var currentDirection = this.currentDirection(params.playDirection, params.currentIteration);
+        // console.log(AnimationDirection[currentDirection]);
+        var animationDirection = this.animationDirection(params.playRate);
         var iterationDuration = params.duration;
         var activeDuration = this.activeDuration(iterationDuration, params.iterations);
         var endTime = this.endTime(params.startDelay, activeDuration, endDelay);
         var beforeActiveBT = this.beforeActiveBoundaryTime(params.startDelay, endTime);
         var activeAfterBT = this.activeAfterBoundaryTime(params.startDelay, activeDuration, endTime);
-        var currentPhase = this.phase(localTime, currentDirection, beforeActiveBT, activeAfterBT);
-        var playState = this.playState(parentTimeline.currentDirection, currentPhase, params.state, parentTimeline.state);
+        var currentPhase = this.phase(localTime, animationDirection, beforeActiveBT, activeAfterBT);
+        var playState = this.playState(animationDirection, currentPhase, params.state, parentTimeline.state);
         var activeTime = this.activeTime(currentPhase, localTime, params.startDelay, params.fill, activeDuration);
         var progress = this.overallProgress(currentPhase, activeTime, iterationDuration, params.iterations, params.iterationStart);
         var iterationProgress = this.iterationProgress(currentPhase, params.iterationStart, progress, activeTime, iterationDuration, params.iterations);
         var currentIteration = this.currentIteration(currentPhase, activeTime, progress, params.iterations, iterationProgress);
-        currentDirection = this.currentDirection(params.playDirection, currentIteration);
         var directedProgress = this.directedProgress(iterationProgress, currentDirection);
         var transformedProgress;
         if (params.easingFunction !== null) {
@@ -320,7 +328,7 @@ var TimelineSystem = /** @class */ (function (_super) {
         if (iterationProgress === null) {
             return null;
         }
-        if (currentDirection === AnimationDirection.forwards) {
+        if (currentDirection === PlayDirection.forwards) {
             return iterationProgress;
         }
         else {
@@ -329,10 +337,10 @@ var TimelineSystem = /** @class */ (function (_super) {
     };
     TimelineSystem.prototype.currentDirection = function (playBackDirection, currentIteration) {
         if (playBackDirection === PlaybackDirection.normal) {
-            return AnimationDirection.forwards;
+            return PlayDirection.forwards;
         }
         else if (playBackDirection === PlaybackDirection.reverse) {
-            return AnimationDirection.reverse;
+            return PlayDirection.reverse;
         }
         else {
             var d = currentIteration;
@@ -340,10 +348,10 @@ var TimelineSystem = /** @class */ (function (_super) {
                 d += 1;
             }
             if (d % 2 === 0) {
-                return AnimationDirection.forwards;
+                return PlayDirection.forwards;
             }
             else {
-                return isFinite(d) ? AnimationDirection.reverse : AnimationDirection.forwards;
+                return isFinite(d) ? PlayDirection.reverse : PlayDirection.forwards;
             }
         }
     };
@@ -389,7 +397,7 @@ var TimelineSystem = /** @class */ (function (_super) {
         return Math.max(startDelay + activeDuration + endDelay, 0);
     };
     TimelineSystem.prototype.animationDirection = function (playBackRate) {
-        return playBackRate < 0 ? AnimationDirection.reverse : AnimationDirection.forwards;
+        return playBackRate < 0 ? AnimationDirection.backwards : AnimationDirection.forwards;
     };
     TimelineSystem.prototype.beforeActiveBoundaryTime = function (startDelay, endTime) {
         return Math.max(Math.min(startDelay, endTime), 0);
@@ -401,7 +409,7 @@ var TimelineSystem = /** @class */ (function (_super) {
         if (localTime < beforeActiveBoundaryTime) {
             return Phase.before;
         }
-        if (animationDirection === AnimationDirection.reverse && localTime === beforeActiveBoundaryTime) {
+        if (animationDirection === AnimationDirection.backwards && localTime === beforeActiveBoundaryTime) {
             return Phase.before;
         }
         // after phase
@@ -422,8 +430,9 @@ var TimelineSystem = /** @class */ (function (_super) {
             case Phase.active:
                 return previousState === PlayState.idle ? PlayState.started : PlayState.running;
             case Phase.after:
-                return previousState === PlayState.justFinished ? PlayState.finished : PlayState.justFinished;
+                return (previousState === PlayState.justFinished || previousState === PlayState.finished) ? PlayState.finished : PlayState.justFinished;
             case Phase.before:
+                // return PlayState.idle;
                 return animationDirection === AnimationDirection.forwards ? PlayState.idle : (previousState === PlayState.running) ? PlayState.justFinished : PlayState.finished;
         }
     };
@@ -431,7 +440,7 @@ var TimelineSystem = /** @class */ (function (_super) {
         if (this._isTMFrameEvent === true) {
             return {
                 active: true,
-                currentDirection: AnimationDirection.forwards,
+                currentDirection: PlayDirection.forwards,
                 // delta: frameEvent.delta,
                 entityId: 0,
                 playRate: 1,

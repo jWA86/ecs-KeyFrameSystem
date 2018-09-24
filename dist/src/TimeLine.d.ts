@@ -7,6 +7,12 @@ export interface IBezierParams {
     P2y: number;
 }
 export declare enum AnimationDirection {
+    /** When playrate >= 0 */
+    "forwards" = 0,
+    /** When playrate < 0 */
+    "backwards" = 1
+}
+export declare enum PlayDirection {
     "forwards" = 0,
     "reverse" = 1
 }
@@ -55,7 +61,7 @@ export interface ITimingOptions {
 export interface IParentTimeline extends interfaces.IComponent {
     time: number;
     playRate: number;
-    currentDirection: AnimationDirection;
+    currentDirection: PlayDirection;
     state: PlayState;
 }
 export interface ITimelineProgress extends interfaces.IComponent {
@@ -80,8 +86,8 @@ export declare class TimelineSystem extends System<ITimelineParams> {
      */
     iterationProgress(currentPhase: Phase, iterationStart: number, overallProgress: number, activeTime: number, iterationDuration: number, iterationCount: number): number;
     currentIteration(currentPhase: Phase, activeTime: number, overallProgress: number, iterationCount: number, iterationProgress: number): number;
-    directedProgress(iterationProgress: number, currentDirection: AnimationDirection): number;
-    currentDirection(playBackDirection: PlaybackDirection, currentIteration: number): AnimationDirection;
+    directedProgress(iterationProgress: number, currentDirection: PlayDirection): number;
+    currentDirection(playBackDirection: PlaybackDirection, currentIteration: number): PlayDirection;
     transformedProgressBezier(directedProgress: number, bezierparams: IBezierParams): number;
     transformedProgressEasingFunc(directedProgress: number, easing: keyof IEasingFunctions): number;
     activeTime(phase: Phase, localTime: number, startDelay: number, fill: FillMode, activeDuration: number): number;
