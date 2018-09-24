@@ -2,14 +2,14 @@ import { expect } from "chai";
 import { ComponentFactory, interfaces } from "ecs-framework";
 import "mocha";
 import { IEasingFunctions } from "../src/EasingFunctions";
-import { AnimationDirection, FillMode, ITimelineParams, PlaybackDirection, PlayState, TimelineSystem } from "../src/TimeLine";
+import { FillMode, ITimelineParams, PlaybackDirection, PlayState, TimelineSystem } from "../src/TimeLine";
 
 describe("TimeLine playstate", () => {
     let system: TimelineSystem;
     const defaultTimeLineParams: ITimelineParams = {
         active: true,
         bezier: null,
-        currentDirection: AnimationDirection.forwards,
+        currentDirection: null,
         currentIteration: 0,
         // delta: 0,
         directedProgress: null,
@@ -197,6 +197,11 @@ describe("TimeLine playstate", () => {
             system.process(frameEvent);
             expect(frameEvent.time).to.be.greaterThan(tm1.startTime + tm1.duration);
             expect(tm1.state, "timeline component is in state '" + PlayState[tm1.state] + "' instead of 'finished'").to.equal(PlayState.finished);
+
+            frameEvent.time = tm1.startTime + endTime + 20;
+            system.process(frameEvent);
+            expect(frameEvent.time).to.be.greaterThan(tm1.startTime + tm1.duration);
+            expect(tm1.state, "timeline component is in state '" + PlayState[tm1.state] + "' instead of 'finished'").to.equal(PlayState.finished);
         });
         // it("negative endDelay should offset the endTime", () => {
         //     const tm1 = tmPool.create(1, true);
@@ -231,6 +236,37 @@ describe("TimeLine playstate", () => {
         // it("endDelay", () => {
 
         // });
+        it("when in reverse playback", () => {
+            const tm1 = tmPool.create(1, true);
+            tm1.startTime = 10;
+            tm1.duration = 10;
+            tm1.playDirection = PlaybackDirection.reverse;
+
+            frameEvent.state = "running";
+            frameEvent.time = 0;
+            system.process(frameEvent);
+            expect(tm1.state, "timeline component is in state '" + PlayState[tm1.state] + "' instead of 'idle'").to.equal(PlayState.idle);
+
+            frameEvent.time = 10;
+            system.process(frameEvent);
+            expect(tm1.state, "timeline component is in state '" + PlayState[tm1.state] + "' instead of 'started'").to.equal(PlayState.started);
+
+            frameEvent.time = 15;
+            system.process(frameEvent);
+            expect(tm1.state, "timeline component is in state '" + PlayState[tm1.state] + "' instead of 'running'").to.equal(PlayState.running);
+
+            frameEvent.time = 20;
+            system.process(frameEvent);
+            expect(tm1.state, "timeline component is in state '" + PlayState[tm1.state] + "' instead of 'justFinished'").to.equal(PlayState.justFinished);
+
+            frameEvent.time = 21;
+            system.process(frameEvent);
+            expect(tm1.state, "timeline component is in state '" + PlayState[tm1.state] + "' instead of 'finished'").to.equal(PlayState.finished);
+
+            frameEvent.time = 22;
+            system.process(frameEvent);
+            expect(tm1.state, "timeline component is in state '" + PlayState[tm1.state] + "' instead of 'finished'").to.equal(PlayState.finished);
+        });
     });
     describe("paused", () => {
         it("should be paused if parentTimeline is paused", () => {

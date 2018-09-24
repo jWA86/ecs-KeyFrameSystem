@@ -9,7 +9,7 @@ describe("Timeline Phase", () => {
     const defaultTimeLineParams: ITimelineParams = {
         active: true,
         bezier: null,
-        currentDirection: AnimationDirection.forwards,
+        currentDirection: null,
         currentIteration: 0,
         // delta: 0,
         directedProgress: null,
@@ -65,9 +65,9 @@ describe("Timeline Phase", () => {
         });
         it("animationDirection is determined by the playback rate", () => {
             expect(system.animationDirection(1)).to.equal(AnimationDirection.forwards);
-            expect(system.animationDirection(-1)).to.equal(AnimationDirection.reverse);
+            expect(system.animationDirection(-1)).to.equal(AnimationDirection.backwards);
             expect(system.animationDirection(2)).to.equal(AnimationDirection.forwards);
-            expect(system.animationDirection(-2)).to.equal(AnimationDirection.reverse);
+            expect(system.animationDirection(-2)).to.equal(AnimationDirection.backwards);
             expect(system.animationDirection(0)).to.equal(AnimationDirection.forwards);
         });
         it("beforeActiveBoundaryTime is the time before the timeline is started and should take the start delay into account and should not be < to 0 ", () => {
@@ -102,11 +102,11 @@ describe("Timeline Phase", () => {
                 const beforeActive = 10;
                 const afterActive = 20;
 
-                expect(system.phase(10, AnimationDirection.reverse, beforeActive, afterActive)).to.equal(Phase.before);
+                expect(system.phase(10, AnimationDirection.backwards, beforeActive, afterActive)).to.equal(Phase.before);
 
-                expect(system.phase(11, AnimationDirection.reverse, beforeActive, afterActive)).to.not.equal(Phase.before);
+                expect(system.phase(11, AnimationDirection.backwards, beforeActive, afterActive)).to.not.equal(Phase.before);
 
-                expect(system.phase(20, AnimationDirection.reverse, beforeActive, afterActive)).to.not.equal(Phase.before);
+                expect(system.phase(20, AnimationDirection.backwards, beforeActive, afterActive)).to.not.equal(Phase.before);
             });
         });
         describe("after phase", () => {
@@ -122,7 +122,7 @@ describe("Timeline Phase", () => {
 
                 expect(system.phase(20, AnimationDirection.forwards, beforeActive, afterActive)).to.equal(Phase.after);
 
-                expect(system.phase(20, AnimationDirection.reverse, beforeActive, afterActive)).to.not.equal(Phase.after);
+                expect(system.phase(20, AnimationDirection.backwards, beforeActive, afterActive)).to.not.equal(Phase.after);
             });
         });
         describe("active phase", () => {
@@ -133,7 +133,7 @@ describe("Timeline Phase", () => {
 
                 expect(system.phase(15, AnimationDirection.forwards, beforeActive, afterActive)).to.equal(Phase.active);
 
-                expect(system.phase(15, AnimationDirection.reverse, beforeActive, afterActive)).to.equal(Phase.active);
+                expect(system.phase(15, AnimationDirection.backwards, beforeActive, afterActive)).to.equal(Phase.active);
             });
         });
     });

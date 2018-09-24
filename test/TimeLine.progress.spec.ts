@@ -2,14 +2,14 @@ import { expect } from "chai";
 import { ComponentFactory, interfaces } from "ecs-framework";
 import "mocha";
 import { IEasingFunctions } from "../src/EasingFunctions";
-import { AnimationDirection, FillMode, ITimelineParams, PlaybackDirection, PlayState, TimelineSystem } from "../src/TimeLine";
+import { FillMode, ITimelineParams, PlaybackDirection, PlayState, TimelineSystem } from "../src/TimeLine";
 
 describe("TimeLine playstate", () => {
     let system: TimelineSystem;
     const defaultTimeLineParams: ITimelineParams = {
         active: true,
         bezier: null,
-        currentDirection: AnimationDirection.forwards,
+        currentDirection: null,
         currentIteration: 0,
         // delta: 0,
         directedProgress: null,
@@ -360,17 +360,45 @@ describe("TimeLine playstate", () => {
             system.process(frameEvent);
             expect(tm1.directedProgress).to.eq(0.4);
 
+            frameEvent.time = 19;
+            system.process(frameEvent);
+            expect(tm1.iterationProgress).to.eq(0.9);
+            expect(tm1.directedProgress).to.eq(0.9);
+
             frameEvent.time = 20;
             system.process(frameEvent);
-            expect(tm1.directedProgress).to.eq(1);
+            // 1 is reached only on the last iteration
+            expect(tm1.iterationProgress).to.equal(0);
+            expect(tm1.directedProgress).to.eq(0);
 
             frameEvent.time = 22;
             system.process(frameEvent);
+            expect(tm1.iterationProgress).to.approximately(0.2, 0.01);
             expect(tm1.directedProgress).to.eq(0.8);
+
+            frameEvent.time = 28;
+            system.process(frameEvent);
+            expect(tm1.iterationProgress).to.approximately(0.8, 0.001);
+            expect(tm1.directedProgress).to.approximately(0.2, 0.001);
 
             frameEvent.time = 30;
             system.process(frameEvent);
-            expect(tm1.directedProgress).to.eq(0);
+            expect(tm1.iterationProgress).to.equal(1);
+            expect(tm1.directedProgress).to.equal(0);
+            expect(tm1.state).to.equal(PlayState.justFinished);
+
+            frameEvent.time = 31;
+            system.process(frameEvent);
+            expect(tm1.iterationProgress).to.equal(1);
+            expect(tm1.directedProgress).to.equal(0);
+            expect(tm1.state).to.equal(PlayState.finished);
+
+            system.process(frameEvent);
+            frameEvent.time = 32;
+            expect(tm1.iterationProgress).to.equal(1);
+            expect(tm1.directedProgress).to.equal(0);
+            expect(tm1.state).to.equal(PlayState.finished);
+
         });
     });
     describe("transformedProgress", () => {
