@@ -262,8 +262,7 @@ var TimelineSystem = /** @class */ (function (_super) {
         // console.log("bp");
         var endDelay = 0;
         var localTime = this.computeLocalTime(parentTimeline.time, params.startTime, params.playRate);
-        var currentDirection = this.currentDirection(params.playDirection, params.currentIteration);
-        // console.log(AnimationDirection[currentDirection]);
+        // const currentDirection = this.currentDirection(params.playDirection, params.currentIteration);
         var animationDirection = this.animationDirection(params.playRate);
         var iterationDuration = params.duration;
         var activeDuration = this.activeDuration(iterationDuration, params.iterations);
@@ -276,6 +275,7 @@ var TimelineSystem = /** @class */ (function (_super) {
         var progress = this.overallProgress(currentPhase, activeTime, iterationDuration, params.iterations, params.iterationStart);
         var iterationProgress = this.iterationProgress(currentPhase, params.iterationStart, progress, activeTime, iterationDuration, params.iterations);
         var currentIteration = this.currentIteration(currentPhase, activeTime, progress, params.iterations, iterationProgress);
+        var currentDirection = this.currentDirection(params.playDirection, currentIteration);
         var directedProgress = this.directedProgress(iterationProgress, currentDirection);
         var transformedProgress;
         if (params.easingFunction !== null) {
