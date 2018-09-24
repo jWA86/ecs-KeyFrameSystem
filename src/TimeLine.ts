@@ -135,8 +135,7 @@ export class TimelineSystem extends System<ITimelineParams> {
         // console.log("bp");
         const endDelay = 0;
         const localTime = this.computeLocalTime(parentTimeline.time, params.startTime, params.playRate);
-        const currentDirection = this.currentDirection(params.playDirection, params.currentIteration);
-        // console.log(AnimationDirection[currentDirection]);
+        // const currentDirection = this.currentDirection(params.playDirection, params.currentIteration);
         const animationDirection = this.animationDirection(params.playRate);
         const iterationDuration = params.duration;
         const activeDuration = this.activeDuration(iterationDuration, params.iterations);
@@ -151,6 +150,8 @@ export class TimelineSystem extends System<ITimelineParams> {
         const progress = this.overallProgress(currentPhase, activeTime, iterationDuration, params.iterations, params.iterationStart);
         const iterationProgress = this.iterationProgress(currentPhase, params.iterationStart, progress, activeTime, iterationDuration, params.iterations);
         const currentIteration = this.currentIteration(currentPhase, activeTime, progress, params.iterations, iterationProgress);
+
+        const currentDirection = this.currentDirection(params.playDirection, currentIteration);
 
         const directedProgress = this.directedProgress(iterationProgress, currentDirection);
 

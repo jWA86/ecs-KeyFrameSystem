@@ -367,9 +367,10 @@ describe("TimeLine playstate", () => {
 
             frameEvent.time = 20;
             system.process(frameEvent);
-            // 1 is reached only on the last iteration
+
             expect(tm1.iterationProgress).to.equal(0);
-            expect(tm1.directedProgress).to.eq(0);
+            expect(tm1.directedProgress).to.eq(1);
+            expect(tm1.state).to.equal(PlayState.running);
 
             frameEvent.time = 22;
             system.process(frameEvent);
