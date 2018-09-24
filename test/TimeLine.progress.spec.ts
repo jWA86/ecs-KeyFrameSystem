@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { ComponentFactory, interfaces } from "ecs-framework";
+import { ComponentFactory, interfaces, ParametersSourceIterator } from "ecs-framework";
 import "mocha";
 import { IEasingFunctions } from "../src/EasingFunctions";
 import { FillMode, ITimelineParams, PlaybackDirection, PlayState, TimelineSystem } from "../src/TimeLine";
@@ -13,11 +13,11 @@ describe("TimeLine playstate", () => {
         currentIteration: 0,
         // delta: 0,
         directedProgress: null,
-        duration: 0,
         easingFunction: "linear" as keyof IEasingFunctions,
         // endDelay: 0,
         entityId: 0,
         fill: FillMode.both,
+        iterationDuration: 0,
         iterationProgress: 0,
         iterationStart: 0,
         iterations: 1,
@@ -62,7 +62,7 @@ describe("TimeLine playstate", () => {
         it("holds a time from the parent timeline and relative to startTime", () => {
             const tm1 = tmPool.create(1, true);
             tm1.startTime = 10;
-            tm1.duration = 10;
+            tm1.iterationDuration = 10;
 
             frameEvent.state = "running";
             frameEvent.time = 5;
@@ -79,13 +79,13 @@ describe("TimeLine playstate", () => {
 
             frameEvent.time = 21;
             system.process(frameEvent);
-            expect(tm1.time).to.gt(tm1.duration);
+            expect(tm1.time).to.gt(tm1.iterationDuration);
 
         });
         it("playRate > 1 should scale the time", () => {
             const tm1 = tmPool.create(1, true);
             tm1.startTime = 10;
-            tm1.duration = 10;
+            tm1.iterationDuration = 10;
             tm1.playRate = 2;
 
             frameEvent.state = "running";
@@ -118,7 +118,7 @@ describe("TimeLine playstate", () => {
                 it("FillMode.forwards should keep progress to 1 after finished, and null before running", () => {
                     const tm1 = tmPool.create(2, true);
                     tm1.startTime = 10;
-                    tm1.duration = 10;
+                    tm1.iterationDuration = 10;
                     tm1.fill = FillMode.forwards;
 
                     frameEvent.state = "running";
@@ -149,7 +149,7 @@ describe("TimeLine playstate", () => {
                 it("FillMode.backwards should have progress set to 0 prior running and null after finishing", () => {
                     const tm1 = tmPool.create(1, true);
                     tm1.startTime = 10;
-                    tm1.duration = 10;
+                    tm1.iterationDuration = 10;
                     tm1.fill = FillMode.backwards;
 
                     frameEvent.state = "running";
@@ -180,7 +180,7 @@ describe("TimeLine playstate", () => {
                 it("FillMode.both should set progress to 0 prior running and keep value 1 after finishing", () => {
                     const tm1 = tmPool.create(1, true);
                     tm1.startTime = 10;
-                    tm1.duration = 10;
+                    tm1.iterationDuration = 10;
                     tm1.fill = FillMode.both;
 
                     frameEvent.state = "running";
@@ -211,7 +211,7 @@ describe("TimeLine playstate", () => {
                 it("FillMode.none should set progress to null before running and after finishing", () => {
                     const tm1 = tmPool.create(1, true);
                     tm1.startTime = 10;
-                    tm1.duration = 10;
+                    tm1.iterationDuration = 10;
                     tm1.fill = FillMode.none;
 
                     frameEvent.state = "running";
@@ -253,7 +253,7 @@ describe("TimeLine playstate", () => {
         it("return the progress of the current iteration", () => {
             const tm1 = tmPool.create(1, true);
             tm1.startTime = 10;
-            tm1.duration = 10;
+            tm1.iterationDuration = 10;
             tm1.iterations = 2;
 
             frameEvent.state = "running";
@@ -287,7 +287,7 @@ describe("TimeLine playstate", () => {
         it("should is the nth iteration", () => {
             const tm1 = tmPool.create(1, true);
             tm1.startTime = 10;
-            tm1.duration = 10;
+            tm1.iterationDuration = 10;
             tm1.iterations = 3;
 
             frameEvent.state = "running";
@@ -333,7 +333,7 @@ describe("TimeLine playstate", () => {
         it("represent current iteration progress relative to the animationDirection", () => {
             const tm1 = tmPool.create(1, true);
             tm1.startTime = 10;
-            tm1.duration = 10;
+            tm1.iterationDuration = 10;
             tm1.iterations = 2;
             tm1.playDirection = PlaybackDirection.reverse;
 
@@ -351,7 +351,7 @@ describe("TimeLine playstate", () => {
         it("playDirection alternate", () => {
             const tm1 = tmPool.create(1, true);
             tm1.startTime = 10;
-            tm1.duration = 10;
+            tm1.iterationDuration = 10;
             tm1.iterations = 2;
             tm1.playDirection = PlaybackDirection.alternate;
 
@@ -406,7 +406,7 @@ describe("TimeLine playstate", () => {
         it("transform progress === directedProgress if no easeing function or bezier are set", () => {
             const tm1 = tmPool.create(1, true);
             tm1.startTime = 10;
-            tm1.duration = 10;
+            tm1.iterationDuration = 10;
             tm1.iterations = 3;
             tm1.playDirection = PlaybackDirection.alternate;
             tm1.easingFunction = null;
@@ -437,7 +437,7 @@ describe("TimeLine playstate", () => {
         it("should be able to use a bezier curve", () => {
             const tm1 = tmPool.create(1, true);
             tm1.startTime = 10;
-            tm1.duration = 10;
+            tm1.iterationDuration = 10;
             tm1.iterations = 3;
             tm1.playDirection = PlaybackDirection.alternate;
             tm1.easingFunction = null;
@@ -464,7 +464,7 @@ describe("TimeLine playstate", () => {
         it("should be able to use a pre-made function by name", () => {
             const tm1 = tmPool.create(1, true);
             tm1.startTime = 10;
-            tm1.duration = 10;
+            tm1.iterationDuration = 10;
             tm1.iterations = 3;
             tm1.playDirection = PlaybackDirection.alternate;
             tm1.easingFunction = "linear";
@@ -486,6 +486,78 @@ describe("TimeLine playstate", () => {
             frameEvent.time = 35;
             system.process(frameEvent);
             expect(tm1.transformedProgress).to.eq(tm1.directedProgress);
+        });
+    });
+    describe("finit parent timeline with multiple iteration", () => {
+        it("when repeat child time line should act as if it is the first iteration", () => {
+            const parentTM = tmPool.create(1, true);
+            parentTM.startTime = 0;
+            parentTM.iterationDuration = 20;
+            parentTM.iterations = 2;
+            parentTM.playDirection = PlaybackDirection.normal;
+            parentTM.easingFunction = "linear";
+
+            const pIterator = new ParametersSourceIterator(Object.assign({}, parentTM));
+            pIterator.setObjectSource("*", tmPool);
+            pIterator.validate();
+
+            const system2 = new TimelineSystem(1, pIterator);
+
+            const childTMPool = new ComponentFactory<ITimelineParams>(10, Object.assign({}, defaultTimeLineParams));
+            system2.setParamSource("*", childTMPool);
+            system2.validateParametersSources();
+
+            const c1 = childTMPool.create(1, true);
+            c1.startTime = 10;
+            c1.iterationDuration = 10;
+            c1.iterations = 1;
+            parentTM.playDirection = PlaybackDirection.normal;
+
+
+            frameEvent.state = "running";
+            frameEvent.time = 0;
+            system.process(frameEvent);
+            system2.process(frameEvent);
+            console.log(parentTM.time);
+            console.log(c1.time);
+
+            frameEvent.time = 10;
+            system.process(frameEvent);
+            system2.process(frameEvent);
+            console.log(parentTM.time);
+            console.log(c1.time);
+
+            frameEvent.time = 20;
+            system.process(frameEvent);
+            system2.process(frameEvent);
+            console.log(parentTM.time);
+            console.log(c1.time);
+
+            frameEvent.time = 25;
+            system.process(frameEvent);
+            system2.process(frameEvent);
+            console.log(parentTM.time);
+            console.log(c1.time);
+
+            frameEvent.time = 30;
+            system.process(frameEvent);
+            system2.process(frameEvent);
+            console.log(parentTM.time);
+            console.log(c1.time);
+
+            frameEvent.time = 35;
+            system.process(frameEvent);
+            system2.process(frameEvent);
+            console.log(parentTM.time);
+            console.log(c1.time);
+
+            frameEvent.time = 40;
+            system.process(frameEvent);
+            system2.process(frameEvent);
+            console.log(parentTM.time);
+            console.log(c1.time);
+            console.log(c1.state);
+
         });
     });
 });

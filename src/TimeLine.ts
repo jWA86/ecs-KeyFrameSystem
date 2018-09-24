@@ -52,7 +52,7 @@ export enum PlayState {
 }
 
 export interface ITimingOptions {
-    duration: number;
+    iterationDuration: number;
     startTime: number; // relative to the parent timeline
     startDelay: number; // offset from the startTime, use to compute iterationStart (ie: skip part)
     iterationStart: number | null; // ie: 0.5 would start half way
@@ -71,6 +71,8 @@ export interface IParentTimeline extends interfaces.IComponent {
     playRate: number;
     currentDirection: PlayDirection;
     state: PlayState;
+    currentIteration: number;
+    iterationDuration: number;
     // delta: number;
 }
 
@@ -92,11 +94,11 @@ export const defaultParameters: ITimelineParams = {
     currentDirection: null,
     currentIteration: 0,
     directedProgress: null,
-    duration: 0,
     easingFunction: "linear" as keyof IEasingFunctions,
     // endDelay: 0,
     entityId: 0,
     fill: FillMode.both,
+    iterationDuration: Infinity,
     iterationProgress: 0,
     iterationStart: 0,
     iterations: Infinity,
@@ -122,7 +124,7 @@ export class TimelineSystem extends System<ITimelineParams> {
         const state = this.getParentTimelineState(frameEvent);
         this._previousParentTmState = this._previousParentTmState || state;
         // only run if previous state of parent timeline was running, so that we can set children time line to finished or paused if the parent is, otherwise don't bother updating children time line.
-        if (this._previousParentTmState !== PlayState.idle  && this._previousParentTmState !== PlayState.finished && this._previousParentTmState !== PlayState.paused) {
+        if (this._previousParentTmState !== PlayState.idle &&  this._previousParentTmState !== PlayState.finished && this._previousParentTmState !== PlayState.paused) {
             // this._previousParentTmState = state;
             const parentTM = this.getParentTimeLine(frameEvent);
             super.process(parentTM, ...args);
@@ -134,10 +136,12 @@ export class TimelineSystem extends System<ITimelineParams> {
         // const startDelay = 0;
         // console.log("bp");
         const endDelay = 0;
-        const localTime = this.computeLocalTime(parentTimeline.time, params.startTime, params.playRate);
+        // const localTime = this.computeLocalTime(parentTimeline.time, params.startTime, params.playRate);
+
+        const localTime = ((parentTimeline.time - params.startTime) * params.playRate) - (parentTimeline.currentIteration * parentTimeline.iterationDuration * params.playRate || 0);
         // const currentDirection = this.currentDirection(params.playDirection, params.currentIteration);
         const animationDirection = this.animationDirection(params.playRate);
-        const iterationDuration = params.duration;
+        const iterationDuration = params.iterationDuration;
         const activeDuration = this.activeDuration(iterationDuration, params.iterations);
         const endTime = this.endTime(params.startDelay, activeDuration, endDelay);
         const beforeActiveBT = this.beforeActiveBoundaryTime(params.startDelay, endTime);
@@ -223,7 +227,7 @@ export class TimelineSystem extends System<ITimelineParams> {
         if (iterationProgress === null) {
             return null;
         }
-        if (currentDirection ===  PlayDirection.forwards) {
+        if (currentDirection === PlayDirection.forwards) {
             return iterationProgress;
         } else {
             return 1.0 - iterationProgress;
@@ -232,18 +236,18 @@ export class TimelineSystem extends System<ITimelineParams> {
 
     public currentDirection(playBackDirection: PlaybackDirection, currentIteration: number): PlayDirection {
         if (playBackDirection === PlaybackDirection.normal) {
-            return  PlayDirection.forwards;
+            return PlayDirection.forwards;
         } else if (playBackDirection === PlaybackDirection.reverse) {
-            return  PlayDirection.reverse;
+            return PlayDirection.reverse;
         } else {
             let d = currentIteration;
             if (playBackDirection === PlaybackDirection.alternateReverse) {
                 d += 1;
             }
             if (d % 2 === 0) {
-                return  PlayDirection.forwards;
+                return PlayDirection.forwards;
             } else {
-                return isFinite(d) ?  PlayDirection.reverse :  PlayDirection.forwards;
+                return isFinite(d) ? PlayDirection.reverse : PlayDirection.forwards;
             }
         }
     }
@@ -344,8 +348,10 @@ export class TimelineSystem extends System<ITimelineParams> {
             return {
                 active: true,
                 currentDirection: PlayDirection.forwards,
+                currentIteration: 0,
                 // delta: frameEvent.delta,
                 entityId: 0,
+                iterationDuration: Infinity,
                 playRate: 1,
                 state: PlayState[frameEvent.state],
                 time: frameEvent.time,
