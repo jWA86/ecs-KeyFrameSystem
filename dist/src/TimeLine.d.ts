@@ -73,12 +73,13 @@ export interface ITimelineProgress extends interfaces.IComponent {
 }
 export interface ITimelineParams extends IParentTimeline, ITimingOptions, ITimelineProgress {
 }
+export declare const defaultParameters: ITimelineParams;
 export declare class TimelineSystem extends System<ITimelineParams> {
     protected _parentTMId?: number;
     protected _parentTimeLineParameterIterator?: ParametersSourceIterator<IParentTimeline>;
     protected _isTMFrameEvent: boolean;
     protected _previousParentTmState: PlayState;
-    constructor(defaultParameter: ITimelineParams, _parentTMId?: number, _parentTimeLineParameterIterator?: ParametersSourceIterator<IParentTimeline>);
+    constructor(_parentTMId?: number, _parentTimeLineParameterIterator?: ParametersSourceIterator<IParentTimeline>);
     process(frameEvent: interfaces.IFrameEvent, ...args: any[]): void;
     execute(params: ITimelineParams, parentTimeline: IParentTimeline): ITimelineParams;
     overallProgress(phase: Phase, activeTime: number, iterationDuration: number, iterationCount: number, iterationStart: number): number;

@@ -210,10 +210,33 @@ var PlayState;
     PlayState[PlayState["justFinished"] = 4] = "justFinished";
     PlayState[PlayState["finished"] = 5] = "finished";
 })(PlayState = exports.PlayState || (exports.PlayState = {}));
+exports.defaultParameters = {
+    active: true,
+    bezier: null,
+    currentDirection: null,
+    currentIteration: 0,
+    directedProgress: null,
+    duration: 0,
+    easingFunction: "linear",
+    // endDelay: 0,
+    entityId: 0,
+    fill: FillMode.both,
+    iterationProgress: 0,
+    iterationStart: 0,
+    iterations: Infinity,
+    playDirection: PlaybackDirection.normal,
+    playRate: 1,
+    progress: null,
+    startDelay: 0,
+    startTime: 0,
+    state: PlayState.idle,
+    time: null,
+    transformedProgress: null,
+};
 var TimelineSystem = /** @class */ (function (_super) {
     __extends(TimelineSystem, _super);
-    function TimelineSystem(defaultParameter, _parentTMId, _parentTimeLineParameterIterator) {
-        var _this = _super.call(this, defaultParameter) || this;
+    function TimelineSystem(_parentTMId, _parentTimeLineParameterIterator) {
+        var _this = _super.call(this, exports.defaultParameters) || this;
         _this._parentTMId = _parentTMId;
         _this._parentTimeLineParameterIterator = _parentTimeLineParameterIterator;
         _parentTimeLineParameterIterator === undefined ? _this._isTMFrameEvent = true : _this._isTMFrameEvent = false;
