@@ -513,50 +513,34 @@ describe("TimeLine playstate", () => {
             c1.iterations = 1;
             parentTM.playDirection = PlaybackDirection.normal;
 
-
             frameEvent.state = "running";
             frameEvent.time = 0;
             system.process(frameEvent);
             system2.process(frameEvent);
-            console.log(parentTM.time);
-            console.log(c1.time);
 
             frameEvent.time = 10;
             system.process(frameEvent);
             system2.process(frameEvent);
-            console.log(parentTM.time);
-            console.log(c1.time);
 
             frameEvent.time = 20;
             system.process(frameEvent);
             system2.process(frameEvent);
-            console.log(parentTM.time);
-            console.log(c1.time);
 
             frameEvent.time = 25;
             system.process(frameEvent);
             system2.process(frameEvent);
-            console.log(parentTM.time);
-            console.log(c1.time);
 
             frameEvent.time = 30;
             system.process(frameEvent);
             system2.process(frameEvent);
-            console.log(parentTM.time);
-            console.log(c1.time);
 
             frameEvent.time = 35;
             system.process(frameEvent);
             system2.process(frameEvent);
-            console.log(parentTM.time);
-            console.log(c1.time);
 
             frameEvent.time = 40;
             system.process(frameEvent);
             system2.process(frameEvent);
-            console.log(parentTM.time);
-            console.log(c1.time);
-            console.log(c1.state);
 
         });
     });

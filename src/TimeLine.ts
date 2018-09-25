@@ -136,9 +136,8 @@ export class TimelineSystem extends System<ITimelineParams> {
         // const startDelay = 0;
         // console.log("bp");
         const endDelay = 0;
-        // const localTime = this.computeLocalTime(parentTimeline.time, params.startTime, params.playRate);
 
-        const localTime = ((parentTimeline.time - params.startTime) * params.playRate) - (parentTimeline.currentIteration * parentTimeline.iterationDuration * params.playRate || 0);
+        const localTime = this.computeLocalTime(parentTimeline.time, params.startTime, params.playRate, parentTimeline.currentIteration, parentTimeline.iterationDuration);
         // const currentDirection = this.currentDirection(params.playDirection, params.currentIteration);
         const animationDirection = this.animationDirection(params.playRate);
         const iterationDuration = params.iterationDuration;
@@ -286,8 +285,8 @@ export class TimelineSystem extends System<ITimelineParams> {
         }
     }
     /** Time relative to startTime */
-    public computeLocalTime(timeLineTime: number, startTime: number, playBackRate) {
-        return (timeLineTime - startTime) * playBackRate;
+    public computeLocalTime(parentTimeLineTime: number, startTime: number, playBackRate: number, parentCurrentIteration: number, iterationDuration: number) {
+        return ((parentTimeLineTime - startTime) * playBackRate) - (parentCurrentIteration * iterationDuration * playBackRate || 0);
     }
 
     public activeDuration(iterationDuration: number, iterationCount: number): number {
