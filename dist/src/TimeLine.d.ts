@@ -95,7 +95,7 @@ export declare class TimelineSystem extends System<ITimelineParams> {
     transformedProgressEasingFunc(directedProgress: number, easing: keyof IEasingFunctions): number;
     activeTime(phase: Phase, localTime: number, startDelay: number, fill: FillMode, activeDuration: number): number;
     /** Time relative to startTime */
-    computeLocalTime(timeLineTime: number, startTime: number, playBackRate: any): number;
+    computeLocalTime(parentTimeLineTime: number, startTime: number, playBackRate: number, parentCurrentIteration: number, iterationDuration: number): number;
     activeDuration(iterationDuration: number, iterationCount: number): number;
     endTime(startDelay: number, activeDuration: number, endDelay: number): number;
     animationDirection(playBackRate: number): AnimationDirection;

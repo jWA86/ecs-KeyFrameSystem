@@ -261,8 +261,7 @@ var TimelineSystem = /** @class */ (function (_super) {
         // const startDelay = 0;
         // console.log("bp");
         var endDelay = 0;
-        // const localTime = this.computeLocalTime(parentTimeline.time, params.startTime, params.playRate);
-        var localTime = ((parentTimeline.time - params.startTime) * params.playRate) - (parentTimeline.currentIteration * parentTimeline.iterationDuration * params.playRate || 0);
+        var localTime = this.computeLocalTime(parentTimeline.time, params.startTime, params.playRate, parentTimeline.currentIteration, parentTimeline.iterationDuration);
         // const currentDirection = this.currentDirection(params.playDirection, params.currentIteration);
         var animationDirection = this.animationDirection(params.playRate);
         var iterationDuration = params.iterationDuration;
@@ -411,8 +410,8 @@ var TimelineSystem = /** @class */ (function (_super) {
         }
     };
     /** Time relative to startTime */
-    TimelineSystem.prototype.computeLocalTime = function (timeLineTime, startTime, playBackRate) {
-        return (timeLineTime - startTime) * playBackRate;
+    TimelineSystem.prototype.computeLocalTime = function (parentTimeLineTime, startTime, playBackRate, parentCurrentIteration, iterationDuration) {
+        return ((parentTimeLineTime - startTime) * playBackRate) - (parentCurrentIteration * iterationDuration * playBackRate || 0);
     };
     TimelineSystem.prototype.activeDuration = function (iterationDuration, iterationCount) {
         return iterationDuration * iterationCount || 0;
